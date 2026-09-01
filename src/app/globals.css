@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens da Maylon, tirados do protótipo.
+ * Teal profundo sobre branco, cartões flutuando na foto da orla.
+ */
+@theme {
+  /*
+   * Rampa derivada da cor da marca: #31a684, medida do arquivo do logo.
+   *
+   * brand-500 é a cor do logo e só aparece na marca e em detalhes. Contra
+   * branco ela dá 3,04:1 — passa em texto grande, reprova em texto normal.
+   * Num totem lido em pé, de longe, isso não serve. Por isso a interface
+   * usa brand-700 e brand-800, que são a mesma cor escurecida e passam
+   * folgado em AA.
+   */
+  --color-brand-50:  #f1f6f5;
+  --color-brand-100: #d0f1e7;
+  --color-brand-300: #81dac0;
+  --color-brand-500: #31a684; /* logo */
+  --color-brand-600: #23765e; /* 5,5:1  */
+  --color-brand-700: #1e6450; /* 7,0:1  */
+  --color-brand-800: #174f3f; /* 9,4:1  */
+  --color-brand-900: #11392d; /* 12,8:1 */
+
+  --color-ink:   #12302a;
+  --color-muted: #5b7a72;
+  --color-line:  #dae8e3;
+
+  --color-danger: #b3261e;
+  --color-warn:   #b26a00;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --radius-card: 28px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  /* Totem: nada de seleção de texto, menu de contexto ou zoom por pinça. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+/* Só os campos que a pessoa realmente preenche aceitam seleção. */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Alvos de toque em totem são grandes. Ninguém acerta 40px em pé,
+   com mala na mão, num tablet a 1,4 m do chão. */
+.touch-target {
+  min-height: 72px;
+}
+
+/* Foco visível de verdade — acessibilidade não é opcional aqui. */
+:focus-visible {
+  outline: 3px solid var(--color-brand-600);
+  outline-offset: 3px;
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.85); opacity: 0.55; }
+  70%  { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+@keyframes tap-hand {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(10px) scale(0.94); }
+}
+
+.animate-pulse-ring { animation: pulse-ring 2.2s ease-out infinite; }
+.animate-tap-hand   { animation: tap-hand 1.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-ring,
+  .animate-tap-hand {
+    animation: none;
+  }
+}
