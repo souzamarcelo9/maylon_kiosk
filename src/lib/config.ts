@@ -14,6 +14,8 @@ export const kioskConfig = {
     lat: Number(process.env.NEXT_PUBLIC_KIOSK_ORIGIN_LAT ?? -23.8955),
     lng: Number(process.env.NEXT_PUBLIC_KIOSK_ORIGIN_LNG ?? -46.4256),
   },
+  /** Zona Maylon do totem. Vai no header `zoneId` das rotas de corrida. */
+  zoneId: process.env.NEXT_PUBLIC_KIOSK_ZONE_ID || undefined,
   trackingBase:
     process.env.NEXT_PUBLIC_TRACKING_BASE ?? 'https://maylon.com.br/t',
 } as const;
@@ -26,6 +28,18 @@ export const serverConfig = {
     | 'mock'
     | 'getnet_app2app',
   terminalId: process.env.MAYLON_TERMINAL_ID ?? 'TERM-DEV-01',
+  /**
+   * Conta de totem no Maylon. Enquanto não existir convidado no PHP,
+   * é sob esta conta que as corridas do totem são criadas.
+   */
+  kioskCustomerId: process.env.MAYLON_KIOSK_CUSTOMER_ID ?? '',
+  /**
+   * Valor de `payment_method` aceito pelo backend.
+   * Confirme com /api/customer/config/get-payment-methods.
+   */
+  paymentMethodCard: process.env.MAYLON_PAYMENT_METHOD_CARD ?? 'digital_payment',
+  paymentMethodPix: process.env.MAYLON_PAYMENT_METHOD_PIX ?? 'digital_payment',
+  paymentMethodCash: process.env.MAYLON_PAYMENT_METHOD_CASH ?? 'cash',
 };
 
 /** Volta para a tela inicial depois disto de inatividade. */

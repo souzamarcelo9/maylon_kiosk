@@ -1,0 +1,401 @@
+From 399a8d66a311508e611924de39444b3ff6956655 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Tue, 8 Sep 2026 15:20:50 +0000
+Subject: [PATCH] Confirma o mapeamento do detalhe da corrida
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Com trip_details_model.dart em mão, cinco inferências foram corrigidas.
+Duas quebrariam a tela 8:
+
+1. O codigo do passageiro e `ref_id`, um campo pronto do backend. O
+   MYL-xxxx que eu derivava do id foi removido.
+
+2. A nota do motorista vem de `driver_avg_rating` NA CORRIDA, nao do
+   objeto driver -- a classe Driver nao tem nota. E nao existe contagem
+   de avaliacoes, entao o "(152 avaliacoes)" do prototipo saiu.
+
+3. O veiculo NAO TEM COR. A classe Vehicle tem modelo, placa, chassi,
+   transmissao, combustivel e propriedade, e nada de cor. A tela mostra
+   categoria e capacidade no lugar do "Prata" do prototipo.
+
+4. Coordenadas sao GeoJSON: { type, coordinates: [lng, lat] }. Nessa
+   ordem, longitude primeiro.
+
+5. Existe `otp` por corrida. E isso que o motorista pede no embarque,
+   entao ganhou o maior destaque da tela 8.
+
+Alem disso:
+- A previsao de chegada nao esta no detalhe: `estimated_time` e a
+  duracao da viagem. Passa a usar /api/customer/ride/arrival-time, e
+  so quando ja existe motorista. Falha ali nao derruba a tela.
+- Valor prefere paid_fare, depois discount_actual_fare, depois
+  actual_fare, e so por ultimo a estimativa.
+- vehicle_category.name vem do proprio detalhe.
+
+Layout revalidado sem rolagem em 3 viewports.
+---
+ README.md                             |  19 +++-
+ src/app/api/kiosk/trips/[id]/route.ts |  10 +-
+ src/app/kiosk/corrida/[id]/page.tsx   |  35 +++++--
+ src/lib/legacy-api.ts                 | 132 ++++++++++++++------------
+ src/lib/types.ts                      |  25 ++++-
+ 5 files changed, 148 insertions(+), 73 deletions(-)
+
+diff --git a/README.md b/README.md
+index 6a4c635..3ad0028 100644
+--- a/README.md
++++ b/README.md
+@@ -192,8 +192,19 @@ A correção definitiva é um estado `awaiting_payment` no backend.
+    `markTripPaid` é inferência.
+ 3. **Resposta crua de `get-zone-id`.** O adaptador aceita `{data:{zone_id}}`
+    e `{zone_id}`, mas convém confirmar.
+-4. **`trip_details_model.dart`.** Foi enviado `trip_model.dart` por engano,
+-   então os campos de motorista e veículo em `mapTrip` são inferência.
+-   Telas 7 e 8 dependem disso.
+-5. **Valores válidos de `payment_method`** em
++4. **Valores válidos de `payment_method`** em
+    `/api/customer/config/get-payment-methods`.
++5. **Resposta de `/api/customer/ride/arrival-time`.** O nome do campo de
++   minutos é lido de forma defensiva (`arrival_time`, `duration`, `eta`,
++   `time`); confirme qual é o certo.
++
++### O veículo não tem cor
++
++A classe `Vehicle` do backend tem `model`, `licence_plate_number`,
++`licence_expire_date`, `vin_number`, `transmission`, `fuel_type`,
++`ownership`, `documents` e `is_active`. Nenhum campo de cor.
++
++O protótipo mostrava "Prata" e isso não tem de onde vir. A tela 8 passou
++a mostrar a categoria e a capacidade de passageiros no lugar. Se cor for
++importante para identificar o carro na fila do shopping — e é — vale
++adicionar a coluna no cadastro de veículo.
+diff --git a/src/app/api/kiosk/trips/[id]/route.ts b/src/app/api/kiosk/trips/[id]/route.ts
+index a8daf25..da4c810 100644
+--- a/src/app/api/kiosk/trips/[id]/route.ts
++++ b/src/app/api/kiosk/trips/[id]/route.ts
+@@ -1,5 +1,5 @@
+ import { NextResponse } from 'next/server';
+-import { getTrip } from '@/lib/legacy-api';
++import { getArrivalMinutes, getTrip } from '@/lib/legacy-api';
+ 
+ export const dynamic = 'force-dynamic';
+ 
+@@ -10,6 +10,14 @@ export async function GET(
+   const { id } = await params;
+   try {
+     const trip = await getTrip(id);
++
++    // A previsão de chegada é uma rota separada — o `estimated_time` do
++    // detalhe é a duração da viagem, não o tempo até o carro chegar.
++    // Só vale a pena consultar quando já existe motorista.
++    if (trip.status === 'assigned' || trip.status === 'arriving') {
++      trip.etaMinutes = await getArrivalMinutes(id);
++    }
++
+     return NextResponse.json({ trip });
+   } catch (err) {
+     console.error('[kiosk/trips/:id]', err);
+diff --git a/src/app/kiosk/corrida/[id]/page.tsx b/src/app/kiosk/corrida/[id]/page.tsx
+index ed06a9b..1cb88c4 100644
+--- a/src/app/kiosk/corrida/[id]/page.tsx
++++ b/src/app/kiosk/corrida/[id]/page.tsx
+@@ -76,12 +76,25 @@ export default function CorridaPage({
+             <div>
+               <p className="t-lead font-bold">Corrida confirmada!</p>
+               <p className="t-hint mt-0.5 text-white/85">
+-                Código {trip?.code ?? '…'} — mostre ao motorista
++                Corrida {trip?.code ?? '…'}
+               </p>
+             </div>
+           </div>
+ 
+           <div className="pad-tight space-y-4"><div className="space-y-4">
++            {/* O backend gera um OTP por corrida. É isto que o motorista
++                pede no embarque, então merece o maior destaque da tela. */}
++            {trip?.otp && (
++              <div className="rounded-2xl bg-brand-50 px-5 py-4 text-center">
++                <p className="t-hint text-muted">
++                  Informe este código ao motorista
++                </p>
++                <p className="t-price font-bold tracking-[0.3em] text-brand-800">
++                  {trip.otp}
++                </p>
++              </div>
++            )}
++
+             <div className="flex items-center gap-4 sm:gap-6">
+               {trip?.driver?.photoUrl ? (
+                 /* eslint-disable-next-line @next/next/no-img-element */
+@@ -97,11 +110,13 @@ export default function CorridaPage({
+                 <p className="t-lead font-bold">
+                   {trip?.driver?.name ?? 'Confirmando motorista…'}
+                 </p>
+-                {trip?.driver?.rating != null && (
++                {/* Sem contagem de avaliações: o backend não expõe. */}
++                {trip?.driver?.rating != null && trip.driver.rating > 0 && (
+                   <p className="t-hint mt-1 text-muted">
+-                    ★ {trip.driver.rating.toLocaleString('pt-BR')}{' '}
+-                    {trip.driver.ratingCount != null &&
+-                      `(${trip.driver.ratingCount} avaliações)`}
++                    ★ {trip.driver.rating.toLocaleString('pt-BR', {
++                      minimumFractionDigits: 1,
++                      maximumFractionDigits: 1,
++                    })}
+                   </p>
+                 )}
+               </div>
+@@ -119,7 +134,15 @@ export default function CorridaPage({
+               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+                 <div>
+                   <p className="t-lead font-semibold">{trip.vehicle.model}</p>
+-                  <p className="t-hint mt-0.5 text-muted">{trip.vehicle.color}</p>
++                  {/* A cor não existe no backend. No lugar dela, a
++                      categoria, que é o que ajuda a identificar o carro. */}
++                  <p className="t-hint mt-0.5 text-muted">
++                    {[trip.categoryName, trip.vehicle.seatCapacity
++                      ? `${trip.vehicle.seatCapacity} lugares`
++                      : null]
++                      .filter(Boolean)
++                      .join(' · ')}
++                  </p>
+                 </div>
+                 <span className="t-lead rounded-xl border-4 border-brand-800 bg-white px-4 py-2 font-mono font-bold tracking-widest sm:px-6 sm:py-3">
+                   {trip.vehicle.plate}
+diff --git a/src/lib/legacy-api.ts b/src/lib/legacy-api.ts
+index 13083d8..b099ce0 100644
+--- a/src/lib/legacy-api.ts
++++ b/src/lib/legacy-api.ts
+@@ -450,99 +450,113 @@ export async function createTrip(input: {
+ /**
+  * GET /api/customer/ride/details/{tripId}
+  *
+- * >>> ESTE MAPEAMENTO É O ÚNICO AINDA NÃO CONFIRMADO. <<<
+- * Recebi `trip_model.dart` (a lista) no lugar de `trip_details_model.dart`,
+- * então os nomes de campo de motorista e veículo abaixo são inferência a
+- * partir da convenção do resto da API. As telas 7 e 8 dependem disto.
++ * Mapeamento CONFIRMADO contra trip_details_model.dart. Cinco coisas
++ * que eu tinha inferido errado e agora estão certas:
+  *
+- * A leitura é defensiva de propósito: aceita várias grafias e, se um
+- * campo faltar, a tela mostra o que tem em vez de quebrar.
++ * - O código do passageiro é `ref_id`, não algo derivado do id.
++ * - A nota do motorista vem de `driver_avg_rating` NA CORRIDA. A classe
++ *   Driver não tem nota, e não existe contagem de avaliações.
++ * - O veículo NÃO tem cor. A tela 8 deixa de mostrar "Prata".
++ * - As coordenadas são GeoJSON: { type, coordinates: [lng, lat] }.
++ * - Existe `otp`, que é o que o passageiro dita ao motorista.
+  */
+ export async function getTrip(tripId: string): Promise<Trip> {
+   const raw = await call<Record<string, any>>(
+     `/api/customer/ride/details/${encodeURIComponent(tripId)}`,
+   );
++  return mapTrip(raw.data ?? raw);
++}
+ 
+-  const d = raw.data ?? raw;
+-  return mapTrip(d);
++/**
++ * POST /api/customer/ride/arrival-time
++ *
++ * O detalhe da corrida não traz previsão de chegada — `estimated_time`
++ * é a duração da viagem, não o tempo até o motorista chegar. O tempo de
++ * chegada é uma rota separada.
++ *
++ * Falha aqui não é fatal: a tela 8 simplesmente não mostra o "chega em".
++ */
++export async function getArrivalMinutes(tripId: string): Promise<number | undefined> {
++  try {
++    const raw = await call<Record<string, any>>(
++      '/api/customer/ride/arrival-time',
++      { method: 'POST', body: JSON.stringify({ trip_request_id: tripId }) },
++    );
++    const d = raw.data ?? raw;
++    const value = d.arrival_time ?? d.duration ?? d.eta ?? d.time;
++    const minutes = num(value, -1);
++    return minutes >= 0 ? Math.round(minutes) : undefined;
++  } catch {
++    return undefined;
++  }
++}
++
++/** GeoJSON do backend: coordinates = [lng, lat]. Nessa ordem. */
++function geoPoint(value: unknown): { lat: number; lng: number } {
++  const c = (value as { coordinates?: unknown[] })?.coordinates;
++  if (Array.isArray(c) && c.length >= 2) {
++    return { lng: num(c[0]), lat: num(c[1]) };
++  }
++  return { lat: 0, lng: 0 };
+ }
+ 
+ function mapTrip(d: Record<string, any>): Trip {
+-  const rawStatus = String(d.current_status ?? d.trip_status ?? d.status ?? 'pending');
++  const rawStatus = String(d.current_status ?? 'pending');
+ 
+-  const driverRaw = d.driver ?? d.driver_details ?? null;
+-  const vehicleRaw = d.vehicle ?? d.vehicle_details ?? driverRaw?.vehicle ?? null;
++  const driverRaw = d.driver ?? null;
++  // O veículo aparece em dois lugares: solto na corrida e dentro do
++  // motorista. Prioriza o da corrida, que é o que foi de fato alocado.
++  const vehicleRaw = d.vehicle ?? driverRaw?.vehicle ?? null;
+ 
+   const driver: Driver | undefined = driverRaw
+     ? {
+-        name: [driverRaw.first_name, driverRaw.last_name]
+-          .filter(Boolean)
+-          .join(' ')
+-          .trim() || driverRaw.name || 'Motorista',
+-        photoUrl: absoluteUrl(
+-          driverRaw.profile_image_full_url?.path ??
+-            driverRaw.profile_image_full_url ??
+-            driverRaw.profile_image,
+-        ),
+-        rating: driverRaw.rating != null ? num(driverRaw.rating) : undefined,
+-        ratingCount:
+-          driverRaw.total_reviews != null
+-            ? num(driverRaw.total_reviews)
+-            : driverRaw.received_reviews_count != null
+-              ? num(driverRaw.received_reviews_count)
+-              : undefined,
++        name:
++          [driverRaw.first_name, driverRaw.last_name]
++            .filter(Boolean)
++            .join(' ')
++            .trim() || 'Motorista',
++        photoUrl: absoluteUrl(driverRaw.profile_image),
++        // Nota é da corrida, não do motorista. E vem como string.
++        rating: d.driver_avg_rating != null ? num(d.driver_avg_rating) : undefined,
+         phone: driverRaw.phone,
+       }
+     : undefined;
+ 
+   const vehicle: Vehicle | undefined = vehicleRaw
+     ? {
+-        model:
+-          [vehicleRaw.brand?.name ?? vehicleRaw.brand, vehicleRaw.model]
+-            .filter(Boolean)
+-            .join(' ')
+-            .trim() || vehicleRaw.model_name || 'Veículo',
+-        color: vehicleRaw.colour ?? vehicleRaw.color ?? '',
+-        plate: vehicleRaw.licence_plate_number ?? vehicleRaw.license_plate ?? '',
+-        imageUrl: absoluteUrl(vehicleRaw.image_full_url ?? vehicleRaw.image),
++        model: vehicleRaw.model?.name ?? 'Veículo',
++        plate: vehicleRaw.licence_plate_number ?? '',
++        imageUrl: absoluteUrl(vehicleRaw.model?.image),
++        seatCapacity: vehicleRaw.model?.seat_capacity,
+       }
+     : undefined;
+ 
+-  const id = String(d.id ?? d.trip_request_id ?? '');
++  const pickup = geoPoint(d.pickup_coordinates);
++  const dropoff = geoPoint(d.destination_coordinates);
++
++  // Ordem de preferência: o que foi pago, depois o valor com desconto,
++  // depois a estimativa. Nunca o estimado se já existe valor real.
++  const amountCents = toCents(
++    d.paid_fare ?? d.discount_actual_fare ?? d.actual_fare ?? d.estimated_fare ?? 0,
++  );
+ 
+   return {
+-    id,
+-    code: shortCode(id),
++    id: String(d.id ?? ''),
++    code: d.ref_id ? String(d.ref_id) : String(d.id ?? '').slice(-6).toUpperCase(),
+     status: mapTripStatus(rawStatus),
+     rawStatus,
+     paymentStatus: d.payment_status === 'paid' ? 'paid' : 'unpaid',
+-    amountCents: toCents(d.actual_fare ?? d.paid_fare ?? d.estimated_fare ?? 0),
+-    origin: {
+-      label: d.pickup_address ?? '',
+-      lat: num(d.pickup_coordinates?.[1] ?? d.pickup_coordinates?.latitude),
+-      lng: num(d.pickup_coordinates?.[0] ?? d.pickup_coordinates?.longitude),
+-    },
+-    destination: {
+-      label: d.destination_address ?? '',
+-      lat: num(d.destination_coordinates?.[1] ?? d.destination_coordinates?.latitude),
+-      lng: num(d.destination_coordinates?.[0] ?? d.destination_coordinates?.longitude),
+-    },
+-    etaMinutes: d.eta != null ? Math.round(num(d.eta)) : undefined,
++    amountCents,
++    origin: { label: d.pickup_address ?? '', ...pickup },
++    destination: { label: d.destination_address ?? '', ...dropoff },
+     encodedPolyline: d.encoded_polyline,
++    otp: d.otp ? String(d.otp) : undefined,
++    categoryName: d.vehicle_category?.name,
+     driver,
+     vehicle,
+   };
+ }
+ 
+-/**
+- * O id da corrida é longo e o passageiro precisa ditar isso ao motorista.
+- * Os 4 últimos caracteres bastam para conferência visual no totem.
+- */
+-function shortCode(id: string): string {
+-  const tail = id.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
+-  return `MYL-${tail || '0000'}`;
+-}
+-
+ /** Valores reais do backend, confirmados no model TripStatus. */
+ function mapTripStatus(legacy: string): TripStatus {
+   const table: Record<string, TripStatus> = {
+diff --git a/src/lib/types.ts b/src/lib/types.ts
+index 35cbe1f..43e098f 100644
+--- a/src/lib/types.ts
++++ b/src/lib/types.ts
+@@ -104,16 +104,28 @@ export interface Payment {
+ export interface Driver {
+   name: string;
+   photoUrl?: string;
++  /**
++   * Vem de `driver_avg_rating` na corrida, não do objeto driver — a
++   * classe Driver do backend não tem nota. E não existe contagem de
++   * avaliações, então o "(152 avaliações)" do protótipo sai da tela.
++   */
+   rating?: number;
+-  ratingCount?: number;
+   phone?: string;
+ }
+ 
+ export interface Vehicle {
++  /** vehicle.model.name — o backend não separa marca de modelo. */
+   model: string;
+-  color: string;
+   plate: string;
+   imageUrl?: string;
++  /**
++   * A COR NÃO EXISTE no backend. A classe Vehicle tem model, placa,
++   * chassi, transmissão, combustível e propriedade — nenhum campo de
++   * cor. O protótipo mostrava "Prata" e isso não tem de onde vir.
++   * Deixado opcional caso o campo seja adicionado depois.
++   */
++  color?: string;
++  seatCapacity?: number;
+ }
+ 
+ /**
+@@ -135,7 +147,7 @@ export type TripStatus =
+ export interface Trip {
+   /** Id da corrida no backend (trip_request_id). */
+   id: string;
+-  /** Código curto mostrado ao passageiro. Derivado do id. */
++  /** `ref_id` do backend. É o código que o passageiro vê e dita. */
+   code: string;
+   status: TripStatus;
+   /** Status cru do backend, para log e depuração. */
+@@ -148,4 +160,11 @@ export interface Trip {
+   vehicle?: Vehicle;
+   etaMinutes?: number;
+   encodedPolyline?: string;
++  /**
++   * OTP da corrida, gerado pelo backend. É isto que o passageiro
++   * informa ao motorista no embarque — mais confiável que o código
++   * derivado que eu tinha inventado.
++   */
++  otp?: string;
++  categoryName?: string;
+ }
+-- 
+2.43.0
+

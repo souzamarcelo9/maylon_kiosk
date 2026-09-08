@@ -4,94 +4,82 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/kiosk/Button';
 import { useKioskSession } from '@/contexts/KioskSessionContext';
-import { kioskConfig } from '@/lib/config';
 
-/** Tela 7 — despacha a corrida e espera um motorista aceitar. */
+/**
+ * Tela 7 — espera um motorista aceitar.
+ *
+ * A corrida já foi criada no backend junto com a cobrança (o PIX exige
+ * trip_id), então aqui não se cria nada: só se acompanha o status.
+ *
+ * Se ninguém aceitar, dispara o estorno. Sem isso, "paguei e não veio
+ * carro" vira reclamação no balcão do shopping.
+ */
 export default function BuscandoPage() {
   const router = useRouter();
-  const { session, hydrated, patch } = useKioskSession();
-  const [code, setCode] = useState<string | null>(session.tripCode ?? null);
+  const { session, hydrated } = useKioskSession();
   const [error, setError] = useState('');
-  const dispatched = useRef(false);
+  const [refundNote, setRefundNote] = useState('');
+  const refunded = useRef(false);
 
-  // Despacha uma vez só. Sem o ref, o StrictMode em dev cria duas corridas.
+  const tripId = session.tripId;
+
   useEffect(() => {
-    if (!hydrated || dispatched.current || code) return;
-    if (!session.quote || !session.category || !session.guest || !session.paymentId) {
-      router.replace('/kiosk');
-      return;
-    }
-    dispatched.current = true;
+    if (hydrated && !tripId) router.replace('/kiosk');
+  }, [hydrated, tripId, router]);
 
-    (async () => {
+  useEffect(() => {
+    if (!tripId) return;
+    let alive = true;
+
+    const id = setInterval(async () => {
       try {
-        const res = await fetch('/api/kiosk/trips', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            quoteId: session.quote!.quoteId,
-            categoryId: session.category!.id,
-            guestId: session.guest!.guestId,
-            paymentId: session.paymentId,
-            kioskId: kioskConfig.id,
-          }),
-        });
+        const res = await fetch(`/api/kiosk/trips/${tripId}`);
+        if (!res.ok || !alive) return;
+        const { trip } = await res.json();
 
-        if (!res.ok) {
-          setError(
-            'O pagamento foi feito, mas não conseguimos chamar o motorista. Procure um atendente com este totem.',
-          );
+        if (trip.status === 'assigned' || trip.status === 'arriving') {
+          router.replace(`/kiosk/corrida/${tripId}`);
           return;
         }
 
-        const { trip } = await res.json();
-        setCode(trip.code);
-        patch({ tripCode: trip.code });
-      } catch {
-        setError('Sem conexão com a central. Procure um atendente.');
-      }
-    })();
-  }, [hydrated, session, code, patch, router]);
-
-  // Acompanha até o motorista aceitar.
-  useEffect(() => {
-    if (!code) return;
-    const id = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/kiosk/trips/${code}`);
-        if (!res.ok) return;
-        const { trip } = await res.json();
-        if (trip.status === 'assigned' || trip.status === 'arriving') {
-          router.replace(`/kiosk/corrida/${code}`);
-        }
         if (trip.status === 'no_drivers' || trip.status === 'cancelled') {
-          setError('Nenhum motorista disponível agora. O valor será estornado.');
+          setError('Nenhum motorista disponível agora.');
+          if (!refunded.current && session.paymentId) {
+            refunded.current = true;
+            await triggerRefund(session.paymentId, setRefundNote);
+          }
         }
-      } catch {}
+      } catch {
+        // Piscada de rede não muda nada. Continua tentando.
+      }
     }, 2500);
-    return () => clearInterval(id);
-  }, [code, router]);
+
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [tripId, session.paymentId, router]);
 
   return (
     <div className="grid flex-1 grid-cols-1 items-center gap-6 overflow-y-auto px-4 py-6 sm:px-8 lg:grid-cols-[1fr_460px] lg:gap-16">
       <div className="text-center">
         <Radar />
         <h1 className="t-title mt-[4vmin] font-bold">
-          {error ? 'Precisamos de ajuda' : 'Procurando o melhor motorista'}
+          {error ? 'Não encontramos motorista' : 'Procurando o melhor motorista'}
         </h1>
         <p className="t-body mt-3 text-muted">
           {error || 'Isso leva alguns instantes.'}
         </p>
 
-        {code && !error && (
-          <p className="t-body mt-[3vmin]">
-            Código da corrida{' '}
-            <strong className="tracking-wider text-brand-700">{code}</strong>
-          </p>
+        {refundNote && (
+          <p className="t-body mt-3 font-medium text-brand-800">{refundNote}</p>
         )}
 
         {error && (
-          <Button className="mx-auto mt-[3vmin] max-w-md" onClick={() => router.replace('/kiosk')}>
+          <Button
+            className="mx-auto mt-[3vmin] max-w-md"
+            onClick={() => router.replace('/kiosk')}
+          >
             Voltar ao início
           </Button>
         )}
@@ -117,6 +105,27 @@ export default function BuscandoPage() {
       </aside>
     </div>
   );
+}
+
+async function triggerRefund(
+  paymentId: string,
+  setNote: (v: string) => void,
+) {
+  try {
+    const res = await fetch(`/api/kiosk/payments/${paymentId}/refund`, {
+      method: 'POST',
+    });
+    const { refunded, manual } = await res.json();
+    if (refunded) {
+      setNote('O valor foi estornado automaticamente.');
+    } else if (manual) {
+      // Cartão presencial exige estorno na adquirente. Não prometa
+      // ao passageiro algo que o sistema não fez.
+      setNote('Procure um atendente para o estorno do pagamento.');
+    }
+  } catch {
+    setNote('Procure um atendente para o estorno do pagamento.');
+  }
 }
 
 function Perk({ label }: { label: string }) {

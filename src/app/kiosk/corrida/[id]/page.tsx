@@ -15,21 +15,21 @@ import type { Trip } from '@/lib/types';
 export default function CorridaPage({
   params,
 }: {
-  params: Promise<{ code: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { code } = use(params);
+  const { id: tripId } = use(params);
   const router = useRouter();
   const { reset } = useKioskSession();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [qr, setQr] = useState<string>('');
 
-  const trackingUrl = `${kioskConfig.trackingBase}/${code}`;
+  const trackingUrl = `${kioskConfig.trackingBase}/${tripId}`;
 
   useEffect(() => {
     let alive = true;
     async function load() {
       try {
-        const res = await fetch(`/api/kiosk/trips/${code}`);
+        const res = await fetch(`/api/kiosk/trips/${tripId}`);
         if (!res.ok) return;
         const { trip: t } = await res.json();
         if (alive) setTrip(t);
@@ -41,7 +41,7 @@ export default function CorridaPage({
       alive = false;
       clearInterval(id);
     };
-  }, [code]);
+  }, [tripId]);
 
   // O passageiro leva o acompanhamento no celular dele.
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function CorridaPage({
             <div>
               <p className="t-lead font-bold">Corrida confirmada!</p>
               <p className="t-hint mt-0.5 text-white/85">
-                Código {code} — mostre ao motorista
+                Código {trip?.code ?? '…'} — mostre ao motorista
               </p>
             </div>
           </div>

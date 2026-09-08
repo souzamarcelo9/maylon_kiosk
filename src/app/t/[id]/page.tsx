@@ -13,18 +13,18 @@ export const dynamic = 'force-dynamic';
 export default async function TrackingPage({
   params,
 }: {
-  params: Promise<{ code: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { code } = await params;
+  const { id } = await params;
 
   let trip;
   try {
-    trip = await getTrip(code);
+    trip = await getTrip(id);
   } catch {
     return (
       <main className="mx-auto max-w-md p-8">
         <h1 className="text-2xl font-bold">Corrida não encontrada</h1>
-        <p className="mt-3 text-muted">Confira o código {code}.</p>
+        <p className="mt-3 text-muted">Confira o código informado.</p>
       </main>
     );
   }

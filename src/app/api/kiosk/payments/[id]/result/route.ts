@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { paymentStore } from '@/lib/payments';
+import { confirmWithBackend, paymentStore } from '@/lib/payments';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,12 +13,11 @@ const schema = z.object({
 });
 
 /**
- * O Get Smart chama isto depois do retorno do deeplink.
+ * O Get Smart chama isto depois do retorno do deeplink App2App.
  *
  * Precisa ser idempotente: o terminal grava o resultado em disco e
  * insiste até receber 200. Se o cartão aprovou e esta chamada se
- * perdeu, o passageiro pagou e não tem corrida — o pior cenário do
- * sistema inteiro.
+ * perdeu, o passageiro pagou e não tem corrida.
  */
 export async function POST(
   req: Request,
@@ -40,6 +39,8 @@ export async function POST(
     return NextResponse.json({ payment: current, duplicate: true });
   }
 
-  const payment = paymentStore.update(id, parsed.data);
+  const payment = paymentStore.update(id, parsed.data)!;
+  if (payment.status === 'approved') await confirmWithBackend(payment);
+
   return NextResponse.json({ payment });
 }

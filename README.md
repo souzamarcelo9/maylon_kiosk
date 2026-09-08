@@ -149,3 +149,51 @@ Node precisa ser 20+ — o Tailwind 4 não roda em 18.
 
 `pnpm` e `yarn` não têm esse bug. Se for recorrente no seu CI, migrar o
 gerenciador resolve de vez.
+
+## Integração com o backend Maylon
+
+Base: `https://auth.maylon.com.br`
+Auth: `Authorization: Bearer <token>` + headers `zoneId` e `X-Localization: pt`
+
+Rotas consumidas, todas em `src/lib/legacy-api.ts`:
+
+| Rota | Uso |
+|---|---|
+| `/api/customer/config/get-zone-id` | zona do totem (cacheada 6 h) |
+| `/api/customer/config/place-api-autocomplete` | busca de destino |
+| `/api/customer/config/place-api-details` | resolve a coordenada |
+| `/api/customer/vehicle/category` | nome e imagem das categorias (cache 30 min) |
+| `/api/customer/ride/get-estimated-fare` | preços, mesma rota do app |
+| `/api/customer/ride/create` | cria a corrida |
+| `/api/customer/ride/details/{id}` | motorista, veículo, status |
+| `/api/customer/ride/payment` | marca a corrida como paga |
+| `/api/v1/pix/generate` | payload EMV |
+| `/api/v1/pix/status` | confirmação do PIX |
+| `/api/v1/pix/refund` | estorno quando não há motorista |
+
+### A ordem está invertida em relação ao app
+
+O `/api/v1/pix/generate` exige `trip_id`, então a corrida precisa existir
+antes do pagamento. No totem o ideal seria o contrário — não se despacha
+motorista para anônimo que não pagou.
+
+Consequência: entre `ride/create` e a confirmação existe uma janela em que
+a corrida existe com `payment_status = unpaid`. **Se o despacho do PHP não
+respeitar esse campo, um motorista pode ser acionado sem pagamento.**
+A correção definitiva é um estado `awaiting_payment` no backend.
+
+### Pontos a confirmar no PHP
+
+1. **`/api/v1/pix/generate` valida o `amount`?** O app manda o valor pelo
+   cliente e a rota não usa `Authorization`. Se o PHP confiar nesse número
+   em vez de reler a corrida, dá para pagar R$ 0,01 numa corrida de R$ 100.
+   Num totem, com a URL exposta, isso é o risco mais sério do projeto.
+2. **Assinatura de `/api/customer/ride/payment`.** O corpo em
+   `markTripPaid` é inferência.
+3. **Resposta crua de `get-zone-id`.** O adaptador aceita `{data:{zone_id}}`
+   e `{zone_id}`, mas convém confirmar.
+4. **`trip_details_model.dart`.** Foi enviado `trip_model.dart` por engano,
+   então os campos de motorista e veículo em `mapTrip` são inferência.
+   Telas 7 e 8 dependem disso.
+5. **Valores válidos de `payment_method`** em
+   `/api/customer/config/get-payment-methods`.

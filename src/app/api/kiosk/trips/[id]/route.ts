@@ -5,14 +5,14 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ code: string }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { code } = await params;
+  const { id } = await params;
   try {
-    const trip = await getTrip(code);
+    const trip = await getTrip(id);
     return NextResponse.json({ trip });
   } catch (err) {
-    console.error('[kiosk/trips/:code]', err);
+    console.error('[kiosk/trips/:id]', err);
     return NextResponse.json({ error: 'upstream_unavailable' }, { status: 502 });
   }
 }

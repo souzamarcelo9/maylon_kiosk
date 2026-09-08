@@ -24,6 +24,7 @@ export default function DestinoPage() {
   const [suggestions, setSuggestions] = useState<Place[]>([]);
   const [selected, setSelected] = useState<Place | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resolving, setResolving] = useState(false);
   const [error, setError] = useState('');
 
   const origin = session.origin ?? kioskConfig.origin;
@@ -52,6 +53,39 @@ export default function DestinoPage() {
     return () => clearTimeout(t);
   }, [query]);
 
+  /**
+   * O autocomplete do backend devolve só `place_id`, sem coordenada.
+   * A coordenada vem no place-api-details, então escolher um endereço
+   * é uma segunda chamada — e sem ela o /ride/create falha.
+   */
+  async function choose(suggestion: Place) {
+    setQuery(suggestion.label);
+    setSuggestions([]);
+    setError('');
+
+    if (!suggestion.placeId) {
+      setSelected(suggestion);
+      return;
+    }
+
+    setResolving(true);
+    try {
+      const res = await fetch(
+        `/api/kiosk/places?placeId=${encodeURIComponent(suggestion.placeId)}`,
+      );
+      if (!res.ok) {
+        setError('Não conseguimos localizar esse endereço. Tente outro.');
+        return;
+      }
+      const { place } = await res.json();
+      setSelected({ ...place, label: place.label || suggestion.label });
+    } catch {
+      setError('Sem conexão. Chame um atendente.');
+    } finally {
+      setResolving(false);
+    }
+  }
+
   async function handleNext() {
     if (!selected || !session.guest) return;
     setLoading(true);
@@ -61,11 +95,7 @@ export default function DestinoPage() {
       const res = await fetch('/api/kiosk/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          origin,
-          destination: selected,
-          guestId: session.guest.guestId,
-        }),
+        body: JSON.stringify({ origin, destination: selected }),
       });
 
       if (!res.ok) {
@@ -138,11 +168,7 @@ export default function DestinoPage() {
                     {suggestions.map((place) => (
                       <li key={`${place.label}-${place.lat}`}>
                         <button
-                          onClick={() => {
-                            setSelected(place);
-                            setQuery(place.label);
-                            setSuggestions([]);
-                          }}
+                          onClick={() => void choose(place)}
                           className="touch-target t-body w-full border-b border-line px-5 text-left last:border-0 hover:bg-brand-50"
                         >
                           {place.label}
@@ -164,9 +190,9 @@ export default function DestinoPage() {
           <Button
             className="mt-[3.5vmin]"
             onClick={handleNext}
-            disabled={!selected || loading}
+            disabled={!selected || loading || resolving}
           >
-            {loading ? 'Calculando…' : 'Ver preços'}
+            {resolving ? 'Localizando…' : loading ? 'Calculando…' : 'Ver preços'}
           </Button>
         </Card>
       </div>

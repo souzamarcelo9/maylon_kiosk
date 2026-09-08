@@ -43,14 +43,22 @@ export default function VeiculoPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Uma chave por tentativa. Retry de rede não cobra duas vezes.
+          // Uma chave por tentativa. Retry de rede não cobra duas vezes
+          // nem cria duas corridas no backend.
           'Idempotency-Key': `${quote.quoteId}:${category.id}:${method}`,
         },
+        // A categoria vai inteira: o /ride/create do backend exige de
+        // volta zone_id, area_id, polyline e os valores da estimativa.
         body: JSON.stringify({
           kioskId: kioskConfig.id,
-          tripDraftId: quote.quoteId,
-          amountCents: category.priceCents,
+          quoteId: quote.quoteId,
+          category,
+          origin: quote.origin,
+          destination: quote.destination,
           method,
+          passengerName: session.guest.name,
+          passengerPhone: session.guest.phone,
+          passengerDocument: session.guest.document,
         }),
       });
 
@@ -64,7 +72,7 @@ export default function VeiculoPage() {
       }
 
       const { payment } = await res.json();
-      patch({ category, paymentId: payment.id });
+      patch({ category, paymentId: payment.id, tripId: payment.tripId });
 
       if (method === 'pix') router.push('/kiosk/pagamento/pix');
       else if (method === 'cash') router.push('/kiosk/buscando');

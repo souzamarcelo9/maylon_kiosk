@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createQuote } from '@/lib/legacy-api';
+import { createQuote, LegacyApiError } from '@/lib/legacy-api';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,13 +9,10 @@ const place = z.object({
   lat: z.number(),
   lng: z.number(),
   placeId: z.string().optional(),
+  zoneId: z.string().optional(),
 });
 
-const schema = z.object({
-  origin: place,
-  destination: place,
-  guestId: z.string().min(1),
-});
+const schema = z.object({ origin: place, destination: place });
 
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
@@ -28,6 +25,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ quote });
   } catch (err) {
     console.error('[kiosk/quote]', err);
+    if (err instanceof LegacyApiError && err.status === 422) {
+      return NextResponse.json({ error: 'no_categories' }, { status: 422 });
+    }
     return NextResponse.json({ error: 'upstream_unavailable' }, { status: 502 });
   }
 }

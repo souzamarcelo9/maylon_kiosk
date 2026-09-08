@@ -25,6 +25,8 @@ interface KioskSession {
   quote?: Quote;
   category?: VehicleCategory;
   paymentId?: string;
+  /** Id da corrida no backend. Criada junto com a cobrança. */
+  tripId?: string;
   tripCode?: string;
 }
 
