@@ -73,43 +73,43 @@ export default function BuscandoPage() {
   }, [code, router]);
 
   return (
-    <div className="grid flex-1 grid-cols-1 items-center gap-16 px-16 py-12 lg:grid-cols-[1fr_460px]">
+    <div className="grid flex-1 grid-cols-1 items-center gap-6 overflow-y-auto px-4 py-6 sm:px-8 lg:grid-cols-[1fr_460px] lg:gap-16">
       <div className="text-center">
         <Radar />
-        <h1 className="mt-16 text-5xl font-bold leading-tight">
+        <h1 className="t-title mt-[4vmin] font-bold">
           {error ? 'Precisamos de ajuda' : 'Procurando o melhor motorista'}
         </h1>
-        <p className="mt-6 text-3xl text-muted">
+        <p className="t-body mt-3 text-muted">
           {error || 'Isso leva alguns instantes.'}
         </p>
 
         {code && !error && (
-          <p className="mt-10 text-2xl">
+          <p className="t-body mt-[3vmin]">
             Código da corrida{' '}
             <strong className="tracking-wider text-brand-700">{code}</strong>
           </p>
         )}
 
         {error && (
-          <Button className="mx-auto mt-12 max-w-md" onClick={() => router.replace('/kiosk')}>
+          <Button className="mx-auto mt-[3vmin] max-w-md" onClick={() => router.replace('/kiosk')}>
             Voltar ao início
           </Button>
         )}
       </div>
 
       <aside className="hidden overflow-hidden rounded-[var(--radius-card)] bg-white shadow-xl lg:block">
-        <div className="p-10 text-center">
-          <span className="inline-block rounded-full bg-brand-700 px-6 py-2 text-lg font-semibold text-white">
+        <div className="pad-tight text-center">
+          <span className="t-hint inline-block rounded-full bg-brand-700 px-5 py-1.5 font-semibold text-white">
             Anúncio
           </span>
-          <h2 className="mt-8 text-4xl font-bold leading-snug text-brand-800">
+          <h2 className="t-lead mt-4 font-bold text-brand-800">
             Viaje com a Maylon e vá mais longe
           </h2>
-          <p className="mt-4 text-2xl text-muted">
+          <p className="t-hint mt-2 text-muted">
             Conforto, segurança e pontualidade em cada corrida.
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 bg-brand-700 px-6 py-10 text-center text-white">
+        <div className="grid grid-cols-3 gap-2 bg-brand-700 px-4 py-5 text-center text-white">
           <Perk label="Segurança em primeiro lugar" />
           <Perk label="Motoristas pontuais" />
           <Perk label="Melhor experiência" />
@@ -120,13 +120,13 @@ export default function BuscandoPage() {
 }
 
 function Perk({ label }: { label: string }) {
-  return <p className="px-2 text-lg leading-snug">{label}</p>;
+  return <p className="t-hint px-1 leading-snug">{label}</p>;
 }
 
 /** Radar do protótipo: anéis que pulsam de dentro para fora. */
 function Radar() {
   return (
-    <div className="relative mx-auto flex h-[380px] w-[380px] items-center justify-center">
+    <div className="relative mx-auto flex h-[clamp(180px,34vmin,380px)] w-[clamp(180px,34vmin,380px)] items-center justify-center">
       {[0, 1, 2].map((i) => (
         <span
           key={i}
@@ -134,8 +134,8 @@ function Radar() {
           style={{ animationDelay: `${i * 0.7}s` }}
         />
       ))}
-      <span className="relative flex h-32 w-32 items-center justify-center rounded-full bg-brand-700 text-white">
-        <svg viewBox="0 0 24 24" className="h-16 w-16" fill="currentColor" aria-hidden="true">
+      <span className="relative flex h-[34%] w-[34%] items-center justify-center rounded-full bg-brand-700 text-white">
+        <svg viewBox="0 0 24 24" className="h-1/2 w-1/2" fill="currentColor" aria-hidden="true">
           <path d="M5 16v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2a3 3 0 0 0-.7-1.9l-1.2-4A2 2 0 0 0 15.2 8H8.8a2 2 0 0 0-1.9 1.4l-1.2 4A3 3 0 0 0 5 16Zm3-1.5a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Zm8 0a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z" />
         </svg>
       </span>

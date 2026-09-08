@@ -64,19 +64,19 @@ export default function DadosPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-12 py-10">
-      <div className="w-full max-w-3xl">
+    <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-4 sm:px-8">
+      <div className="w-full max-w-3xl py-2">
         <Stepper current={0} />
 
-        <Card className="p-14">
-          <Logo height={72} className="mx-auto mb-12" />
+        <Card className="pad-card">
+          <Logo className="hide-short mx-auto mb-[3vmin] h-[clamp(40px,7vmin,72px)] w-auto" />
 
-          <h1 className="text-4xl font-bold">Seus dados</h1>
-          <p className="mt-2 text-2xl text-muted">
+          <h1 className="t-title font-bold">Seus dados</h1>
+          <p className="t-hint mt-1 text-muted">
             Usamos só para identificar sua corrida.
           </p>
 
-          <div className="mt-10 space-y-8">
+          <div className="mt-[3vmin] space-y-[2.5vmin]">
             <Field
               label="Nome completo"
               required
@@ -111,13 +111,13 @@ export default function DadosPage() {
           </div>
 
           {errors.form && (
-            <p role="alert" className="mt-8 text-xl text-danger">
+            <p role="alert" className="t-hint mt-4 text-danger">
               {errors.form}
             </p>
           )}
 
           <Button
-            className="mt-12"
+            className="mt-[3.5vmin]"
             onClick={handleSubmit}
             disabled={submitting || name.trim().length < 3}
           >
@@ -131,7 +131,7 @@ export default function DadosPage() {
 
 function PhoneIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z" strokeLinejoin="round" />
     </svg>
   );

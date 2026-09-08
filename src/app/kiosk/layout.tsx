@@ -9,7 +9,7 @@ export default function KioskLayout({ children }: { children: ReactNode }) {
     <KioskSessionProvider>
       <BackdropSwitch />
       <IdleGuard />
-      <main className="relative flex min-h-screen flex-col">{children}</main>
+      <main className="h-screen-safe relative flex flex-col">{children}</main>
     </KioskSessionProvider>
   );
 }

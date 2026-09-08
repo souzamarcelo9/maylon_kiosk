@@ -61,44 +61,44 @@ export default function CorridaPage({
   }, [reset]);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-center gap-5 bg-brand-700 px-10 py-7 text-white">
+    <div className="flex h-screen-safe flex-col">
+      <header className="flex shrink-0 items-center justify-center gap-4 bg-brand-700 px-4 py-3 text-white sm:px-8 sm:py-5">
         <MaylonMark
-          className="h-12 w-auto [--logo-knockout:#1e6450]"
+          className="h-[clamp(28px,4.5vmin,48px)] w-auto [--logo-knockout:#1e6450]"
         />
-        <h1 className="text-4xl font-bold">Detalhes da corrida</h1>
+        <h1 className="t-title font-bold">Detalhes da corrida</h1>
       </header>
 
-      <div className="flex flex-1 items-center justify-center p-10">
+      <div className="flex flex-1 items-start justify-center overflow-y-auto p-4 sm:items-center sm:p-8">
         <Card className="w-full max-w-4xl overflow-hidden">
-          <div className="flex items-center gap-6 bg-brand-800 px-10 py-8 text-white">
+          <div className="flex items-center gap-4 bg-brand-800 px-5 py-4 text-white sm:px-8 sm:py-6">
             <CheckIcon />
             <div>
-              <p className="text-3xl font-bold">Corrida confirmada!</p>
-              <p className="mt-1 text-xl text-white/80">
+              <p className="t-lead font-bold">Corrida confirmada!</p>
+              <p className="t-hint mt-0.5 text-white/85">
                 Código {code} — mostre ao motorista
               </p>
             </div>
           </div>
 
-          <div className="space-y-8 p-10">
-            <div className="flex items-center gap-8">
+          <div className="pad-tight space-y-4"><div className="space-y-4">
+            <div className="flex items-center gap-4 sm:gap-6">
               {trip?.driver?.photoUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={trip.driver.photoUrl}
                   alt=""
-                  className="h-32 w-32 rounded-full object-cover"
+                  className="h-[clamp(64px,12vmin,128px)] w-[clamp(64px,12vmin,128px)] shrink-0 rounded-full object-cover"
                 />
               ) : (
-                <div className="h-32 w-32 rounded-full bg-brand-100" />
+                <div className="h-[clamp(64px,12vmin,128px)] w-[clamp(64px,12vmin,128px)] shrink-0 rounded-full bg-brand-100" />
               )}
               <div className="flex-1">
-                <p className="text-4xl font-bold">
+                <p className="t-lead font-bold">
                   {trip?.driver?.name ?? 'Confirmando motorista…'}
                 </p>
                 {trip?.driver?.rating != null && (
-                  <p className="mt-2 text-2xl text-muted">
+                  <p className="t-hint mt-1 text-muted">
                     ★ {trip.driver.rating.toLocaleString('pt-BR')}{' '}
                     {trip.driver.ratingCount != null &&
                       `(${trip.driver.ratingCount} avaliações)`}
@@ -106,29 +106,29 @@ export default function CorridaPage({
                 )}
               </div>
               {trip?.etaMinutes != null && (
-                <div className="rounded-2xl bg-brand-50 px-8 py-6 text-center">
-                  <p className="text-lg text-muted">Chega em</p>
-                  <p className="text-4xl font-bold text-brand-700">
+                <div className="shrink-0 rounded-2xl bg-brand-50 px-4 py-3 text-center sm:px-6"><div>
+                  <p className="t-hint text-muted">Chega em</p>
+                  <p className="t-lead font-bold text-brand-700">
                     {trip.etaMinutes} min
                   </p>
-                </div>
+                </div></div>
               )}
             </div>
 
             {trip?.vehicle && (
-              <div className="flex items-center justify-between border-t border-line pt-8">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
                 <div>
-                  <p className="text-3xl font-semibold">{trip.vehicle.model}</p>
-                  <p className="mt-1 text-2xl text-muted">{trip.vehicle.color}</p>
+                  <p className="t-lead font-semibold">{trip.vehicle.model}</p>
+                  <p className="t-hint mt-0.5 text-muted">{trip.vehicle.color}</p>
                 </div>
-                <span className="rounded-xl border-4 border-brand-800 bg-white px-8 py-4 font-mono text-4xl font-bold tracking-widest">
+                <span className="t-lead rounded-xl border-4 border-brand-800 bg-white px-4 py-2 font-mono font-bold tracking-widest sm:px-6 sm:py-3">
                   {trip.vehicle.plate}
                 </span>
               </div>
             )}
 
-            <div className="grid grid-cols-[1fr_auto] items-center gap-10 border-t border-line pt-8">
-              <div className="space-y-5">
+            <div className="grid grid-cols-1 items-center gap-4 border-t border-line pt-4 sm:grid-cols-[1fr_auto] sm:gap-8">
+              <div className="space-y-3">
                 <Row label="Origem" value={trip?.origin.label ?? kioskConfig.label} />
                 <Row label="Destino" value={trip?.destination.label ?? '—'} />
                 <Row
@@ -141,9 +141,13 @@ export default function CorridaPage({
               <div className="text-center">
                 {qr && (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={qr} alt="QR Code para acompanhar a corrida" className="mx-auto" />
+                  <img
+                    src={qr}
+                    alt="QR Code para acompanhar a corrida"
+                    className="mx-auto h-auto w-[clamp(120px,18vmin,240px)]"
+                  />
                 )}
-                <p className="mt-3 max-w-[240px] text-lg leading-snug text-muted">
+                <p className="t-hint mx-auto mt-2 max-w-[240px] leading-snug text-muted">
                   Aponte a câmera para acompanhar no seu celular
                 </p>
               </div>
@@ -152,7 +156,7 @@ export default function CorridaPage({
             <Button variant="outline" onClick={() => router.replace('/kiosk')}>
               Concluir
             </Button>
-          </div>
+          </div></div>
         </Card>
       </div>
     </div>
@@ -170,15 +174,15 @@ function Row({
 }) {
   return (
     <div>
-      <p className="text-xl font-semibold text-brand-700">{label}</p>
-      <p className={emphasis ? 'text-4xl font-bold' : 'mt-1 text-2xl'}>{value}</p>
+      <p className="t-hint font-semibold text-brand-700">{label}</p>
+      <p className={emphasis ? 't-lead font-bold' : 't-label mt-0.5'}>{value}</p>
     </div>
   );
 }
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-16 w-16" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="h-[clamp(36px,6vmin,64px)] w-[clamp(36px,6vmin,64px)] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="10" />
       <path d="m7.5 12.5 3 3 6-6.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>

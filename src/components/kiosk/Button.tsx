@@ -14,7 +14,7 @@ export function Button({
   ...rest
 }: Props) {
   const base =
-    'touch-target inline-flex w-full items-center justify-center gap-3 rounded-2xl px-8 text-2xl font-semibold transition active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-45';
+    'touch-target t-body inline-flex w-full items-center justify-center gap-3 rounded-2xl px-6 font-semibold transition active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-45';
 
   const variants = {
     primary: 'bg-brand-700 text-white hover:bg-brand-800',

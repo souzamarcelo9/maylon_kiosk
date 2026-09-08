@@ -77,23 +77,23 @@ export default function VeiculoPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex items-center gap-6 bg-brand-700 px-10 py-7 text-white">
+    <div className="flex h-screen-safe flex-col">
+      <header className="flex shrink-0 items-center gap-4 bg-brand-700 px-4 py-3 text-white sm:px-8 sm:py-5">
         <button
           onClick={() => router.back()}
           aria-label="Voltar"
-          className="rounded-xl p-3 text-4xl leading-none hover:bg-white/10"
+          className="rounded-xl px-3 py-1 text-3xl leading-none hover:bg-white/10"
         >
           ‹
         </button>
-        <h1 className="flex-1 text-center text-4xl font-bold">Escolher veículo</h1>
-        <span className="w-14" />
+        <h1 className="t-title flex-1 text-center font-bold">Escolher veículo</h1>
+        <span className="w-10" />
       </header>
 
-      <div className="flex-1 space-y-8 overflow-y-auto p-10">
-        <Card className="p-10">
-          <h2 className="mb-8 text-3xl font-semibold">Categoria</h2>
-          <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:space-y-6 sm:p-8">
+        <Card className="pad-tight">
+          <h2 className="t-lead mb-4 font-semibold">Categoria</h2>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {quote.categories.map((c) => {
               const active = c.id === categoryId;
               return (
@@ -101,29 +101,29 @@ export default function VeiculoPage() {
                   key={c.id}
                   onClick={() => setCategoryId(c.id)}
                   aria-pressed={active}
-                  className={`relative rounded-3xl border-2 p-6 text-center transition ${
+                  className={`relative rounded-2xl border-2 p-3 text-center transition sm:p-5 ${
                     active
                       ? 'border-brand-600 bg-brand-50'
                       : 'border-line bg-white hover:border-brand-300'
                   }`}
                 >
                   {c.discount && (
-                    <span className="absolute left-4 top-4 rounded-full bg-brand-600 px-3 py-1 text-sm font-bold text-white">
+                    <span className="absolute left-2 top-2 rounded-full bg-brand-600 px-2 py-0.5 text-xs font-bold text-white">
                       %
                     </span>
                   )}
                   {c.imageUrl ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={c.imageUrl} alt="" className="mx-auto h-28 object-contain" />
+                    <img src={c.imageUrl} alt="" className="mx-auto h-[clamp(48px,9vmin,112px)] object-contain" />
                   ) : (
-                    <div className="mx-auto flex h-28 items-center justify-center text-6xl">🚗</div>
+                    <div className="mx-auto flex h-[clamp(48px,9vmin,112px)] items-center justify-center text-[clamp(28px,6vmin,56px)]">🚗</div>
                   )}
-                  <p className="mt-4 text-2xl font-semibold">{c.name}</p>
-                  <p className="mt-1 text-2xl font-bold text-brand-700">
+                  <p className="t-hint mt-2 font-semibold">{c.name}</p>
+                  <p className="t-body mt-1 font-bold text-brand-700">
                     {formatBRL(c.priceCents)}
                   </p>
                   {c.etaMinutes != null && (
-                    <p className="mt-1 text-lg text-muted">{c.etaMinutes} min</p>
+                    <p className="t-hint mt-0.5 text-muted">{c.etaMinutes} min</p>
                   )}
                 </button>
               );
@@ -131,18 +131,18 @@ export default function VeiculoPage() {
           </div>
         </Card>
 
-        <Card className="space-y-6 p-10">
+        <Card className="pad-tight space-y-3">
           <Route label="Origem" value={quote.origin.label} />
           <Route label="Destino" value={quote.destination.label} />
-          <div className="flex items-baseline justify-between border-t border-line pt-6">
-            <span className="text-2xl font-semibold text-brand-700">Distância</span>
-            <span className="text-2xl">{formatKm(quote.distanceKm)}</span>
+          <div className="flex items-baseline justify-between border-t border-line pt-3">
+            <span className="t-label font-semibold text-brand-700">Distância</span>
+            <span className="t-label">{formatKm(quote.distanceKm)}</span>
           </div>
         </Card>
 
-        <Card className="p-10">
-          <h2 className="mb-6 text-3xl font-semibold">Forma de pagamento</h2>
-          <div className="grid grid-cols-2 gap-6">
+        <Card className="pad-tight">
+          <h2 className="t-lead mb-3 font-semibold">Forma de pagamento</h2>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <MethodButton
               active={method === 'credit'}
               onClick={() => setMethod('credit')}
@@ -159,16 +159,16 @@ export default function VeiculoPage() {
         </Card>
 
         {error && (
-          <p role="alert" className="text-center text-2xl text-danger">
+          <p role="alert" className="t-hint text-center text-danger">
             {error}
           </p>
         )}
       </div>
 
-      <footer className="flex items-center gap-10 border-t border-line bg-white px-10 py-8">
+      <footer className="flex shrink-0 items-center gap-4 border-t border-line bg-white px-4 py-3 sm:gap-8 sm:px-8 sm:py-5">
         <div>
-          <p className="text-xl text-muted">Tarifa</p>
-          <p className="text-5xl font-bold text-brand-800">
+          <p className="t-hint text-muted">Tarifa</p>
+          <p className="t-price font-bold text-brand-800">
             {category ? formatBRL(category.priceCents) : '—'}
           </p>
         </div>
@@ -187,8 +187,8 @@ export default function VeiculoPage() {
 function Route({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xl font-semibold text-brand-700">{label}</p>
-      <p className="mt-1 text-2xl">{value}</p>
+      <p className="t-hint font-semibold text-brand-700">{label}</p>
+      <p className="t-label mt-0.5">{value}</p>
     </div>
   );
 }
@@ -208,12 +208,12 @@ function MethodButton({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`touch-target rounded-2xl border-2 px-8 py-6 text-left transition ${
+      className={`touch-target rounded-2xl border-2 px-4 py-3 text-left transition sm:px-6 ${
         active ? 'border-brand-600 bg-brand-50' : 'border-line bg-white'
       }`}
     >
-      <span className="block text-2xl font-semibold">{label}</span>
-      <span className="mt-1 block text-lg text-muted">{hint}</span>
+      <span className="t-label block font-semibold">{label}</span>
+      <span className="t-hint mt-0.5 block text-muted">{hint}</span>
     </button>
   );
 }

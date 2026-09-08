@@ -31,24 +31,24 @@ export default function CartaoPage() {
     payment?.status === 'expired';
 
   return (
-    <div className="flex flex-1 items-center justify-center px-12 py-10">
-      <Card className="w-full max-w-2xl p-14 text-center">
-        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-brand-700 text-white">
+    <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-4 sm:px-8">
+      <Card className="pad-card w-full max-w-2xl text-center">
+        <div className="mx-auto flex h-[clamp(48px,9vmin,96px)] w-[clamp(48px,9vmin,96px)] items-center justify-center rounded-full bg-brand-700 text-white">
           <CardIcon />
         </div>
 
-        <h1 className="mt-8 text-4xl font-bold">
+        <h1 className="t-title mt-[2.5vmin] font-bold">
           {failed ? 'Pagamento não aprovado' : 'Pagamento na maquininha'}
         </h1>
-        <span className="mx-auto mt-4 block h-1 w-16 rounded bg-brand-300" />
+        <span className="mx-auto mt-3 block h-1 w-16 rounded bg-brand-300" />
 
         {failed ? (
           <>
-            <p className="mt-8 text-2xl text-muted">
+            <p className="t-body mt-[2.5vmin] text-muted">
               {payment?.declineReason ??
                 'A transação não foi concluída. Você pode tentar de novo ou escolher PIX.'}
             </p>
-            <div className="mt-12 space-y-5">
+            <div className="mt-[3vmin] space-y-3">
               <Button onClick={() => router.replace('/kiosk/veiculo')}>
                 Tentar novamente
               </Button>
@@ -59,21 +59,21 @@ export default function CartaoPage() {
           </>
         ) : (
           <>
-            <p className="mt-6 text-2xl text-muted">
+            <p className="t-body mt-2 text-muted">
               Insira ou aproxime o cartão na maquininha ao lado da tela
             </p>
 
-            <div className="relative mx-auto mt-10 flex h-72 w-72 items-center justify-center">
+            <div className="relative mx-auto mt-[3vmin] flex h-[clamp(140px,28vmin,288px)] w-[clamp(140px,28vmin,288px)] items-center justify-center">
               <span className="absolute inset-0 rounded-full bg-brand-100 animate-pulse-ring" />
               <PinpadIllustration />
             </div>
 
-            <p className="mt-8 text-xl text-muted">Valor da corrida</p>
-            <p className="text-6xl font-bold text-brand-800">
+            <p className="t-hint mt-[2.5vmin] text-muted">Valor da corrida</p>
+            <p className="t-price font-bold text-brand-800">
               {payment ? formatBRL(payment.amountCents) : '—'}
             </p>
 
-            <div className="mt-10 flex items-center justify-center gap-4 rounded-2xl bg-brand-50 py-6 text-2xl">
+            <div className="t-body mt-[3vmin] flex items-center justify-center gap-4 rounded-2xl bg-brand-50 py-4">
               {unreachable ? (
                 <span className="text-warn">Reconectando…</span>
               ) : (
@@ -81,7 +81,7 @@ export default function CartaoPage() {
               )}
             </div>
 
-            <p className="mt-8 text-xl text-muted">
+            <p className="t-hint mt-3 text-muted">
               Não retire o cartão até a maquininha avisar.
             </p>
           </>
@@ -99,7 +99,7 @@ function statusLabel(status?: string) {
 
 function CardIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="h-1/2 w-1/2" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="2" y="5" width="20" height="14" rx="2.5" />
       <path d="M2 10h20" />
     </svg>
@@ -108,7 +108,7 @@ function CardIcon() {
 
 function PinpadIllustration() {
   return (
-    <svg viewBox="0 0 120 180" className="relative h-64" aria-hidden="true">
+    <svg viewBox="0 0 120 180" className="relative h-[85%]" aria-hidden="true">
       <rect x="12" y="6" width="96" height="168" rx="14" fill="#16302e" />
       <rect x="22" y="18" width="76" height="66" rx="6" fill="#0b5e5a" />
       <path

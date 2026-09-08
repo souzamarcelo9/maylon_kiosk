@@ -84,32 +84,32 @@ export default function DestinoPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-12 py-10">
-      <div className="w-full max-w-4xl">
+    <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-4 sm:px-8">
+      <div className="w-full max-w-4xl py-2">
         <Stepper current={1} />
 
-        <Card className="p-14">
-          <div className="flex items-center gap-5">
+        <Card className="pad-card">
+          <div className="flex items-center gap-4">
             <PinIcon />
             <div>
-              <h1 className="text-4xl font-bold text-brand-800">Para onde vamos?</h1>
-              <p className="mt-1 text-2xl text-muted">
+              <h1 className="t-title font-bold text-brand-800">Para onde vamos?</h1>
+              <p className="t-hint mt-1 text-muted">
                 A saída já está marcada. Digite só o destino.
               </p>
             </div>
           </div>
 
-          <div className="mt-12 grid grid-cols-[auto_1fr] gap-x-6">
-            <div className="flex flex-col items-center pt-11">
+          <div className="mt-[3vmin] grid grid-cols-[auto_1fr] gap-x-4">
+            <div className="flex flex-col items-center pt-[clamp(38px,6.5vmin,56px)]">
               <TargetIcon />
               <span className="my-2 w-px flex-1 border-l-2 border-dashed border-brand-300" />
               <NavIcon />
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-[2.5vmin]">
               <div>
-                <span className="mb-2 block text-xl font-medium">De</span>
-                <div className="flex h-[76px] items-center rounded-2xl border-2 border-line bg-brand-50 px-6 text-2xl text-brand-800">
+                <span className="t-label mb-2 block font-medium">De</span>
+                <div className="field-h t-body flex items-center rounded-2xl border-2 border-line bg-brand-50 px-5 text-brand-800">
                   {origin.label}
                 </div>
               </div>
@@ -117,7 +117,7 @@ export default function DestinoPage() {
               <div>
                 <label
                   htmlFor="destino"
-                  className="mb-2 block text-xl font-medium"
+                  className="t-label mb-2 block font-medium"
                 >
                   Para
                 </label>
@@ -130,11 +130,11 @@ export default function DestinoPage() {
                     setQuery(e.target.value);
                     setSelected(null);
                   }}
-                  className="h-[76px] w-full rounded-2xl border-2 border-line bg-white px-6 text-2xl outline-none transition placeholder:text-muted/60 focus:border-brand-600"
+                  className="field-h t-body w-full rounded-2xl border-2 border-line bg-white px-5 outline-none transition placeholder:text-muted/60 focus:border-brand-600"
                 />
 
                 {suggestions.length > 0 && !selected && (
-                  <ul className="mt-3 max-h-[320px] overflow-y-auto rounded-2xl border-2 border-line bg-white">
+                  <ul className="mt-3 max-h-[32vh] overflow-y-auto rounded-2xl border-2 border-line bg-white">
                     {suggestions.map((place) => (
                       <li key={`${place.label}-${place.lat}`}>
                         <button
@@ -143,7 +143,7 @@ export default function DestinoPage() {
                             setQuery(place.label);
                             setSuggestions([]);
                           }}
-                          className="w-full border-b border-line px-6 py-6 text-left text-2xl last:border-0 hover:bg-brand-50"
+                          className="touch-target t-body w-full border-b border-line px-5 text-left last:border-0 hover:bg-brand-50"
                         >
                           {place.label}
                         </button>
@@ -156,13 +156,13 @@ export default function DestinoPage() {
           </div>
 
           {error && (
-            <p role="alert" className="mt-8 text-xl text-danger">
+            <p role="alert" className="t-hint mt-4 text-danger">
               {error}
             </p>
           )}
 
           <Button
-            className="mt-12"
+            className="mt-[3.5vmin]"
             onClick={handleNext}
             disabled={!selected || loading}
           >
@@ -176,7 +176,7 @@ export default function DestinoPage() {
 
 function PinIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-14 w-14 text-brand-700" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg viewBox="0 0 24 24" className="h-[clamp(32px,5vmin,56px)] w-[clamp(32px,5vmin,56px)] shrink-0 text-brand-700" fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="12" cy="12" r="10" />
       <path d="M12 7a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" />
     </svg>
@@ -184,7 +184,7 @@ function PinIcon() {
 }
 function TargetIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-10 w-10 text-brand-700" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="h-[clamp(24px,3.6vmin,40px)] w-[clamp(24px,3.6vmin,40px)] text-brand-700" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="7" />
       <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
       <path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeLinecap="round" />
@@ -193,7 +193,7 @@ function TargetIcon() {
 }
 function NavIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-10 w-10 text-brand-700" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="h-[clamp(24px,3.6vmin,40px)] w-[clamp(24px,3.6vmin,40px)] text-brand-700" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M4 12 20 5l-7 16-2-7-7-2Z" strokeLinejoin="round" />
     </svg>
   );

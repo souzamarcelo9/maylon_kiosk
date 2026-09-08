@@ -19,26 +19,26 @@ export default function KioskHome() {
   }, [hydrated]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-12 text-center">
-      <Logo height={120} priority />
+    <div className="flex flex-1 flex-col items-center justify-center gap-[3vmin] px-6 py-8 text-center">
+      <Logo className="h-[clamp(56px,11vmin,120px)] w-auto" priority />
 
-      <h1 className="mt-16 max-w-3xl text-6xl font-bold leading-tight text-brand-900">
+      <h1 className="t-display max-w-3xl font-bold text-brand-900">
         Táxi na porta, sem instalar aplicativo.
       </h1>
-      <p className="mt-6 text-3xl text-brand-800">{kioskConfig.label}</p>
+      <p className="t-lead text-brand-800">{kioskConfig.label}</p>
 
       <Link
         href="/kiosk/dados"
-        className="group relative mt-20 flex h-[240px] w-[560px] items-center justify-center rounded-full bg-brand-700 text-white shadow-[0_30px_70px_-25px_rgba(7,61,59,0.7)] transition active:scale-[0.98]"
+        className="group relative flex aspect-[7/3] w-[min(88vw,560px)] max-h-[26vh] items-center justify-center rounded-full bg-brand-700 text-white shadow-[0_30px_70px_-25px_rgba(7,61,59,0.7)] transition active:scale-[0.98]"
       >
         <span className="absolute inset-0 rounded-full bg-brand-600 animate-pulse-ring" />
-        <span className="relative flex items-center gap-6">
+        <span className="relative flex items-center gap-[2vmin]">
           <TapHand />
-          <span className="text-5xl font-bold">Iniciar viagem</span>
+          <span className="t-title font-bold">Iniciar viagem</span>
         </span>
       </Link>
 
-      <p className="mt-14 text-2xl font-medium text-brand-800">
+      <p className="t-body font-medium text-brand-800">
         Toque na tela para começar
       </p>
     </div>
@@ -50,7 +50,7 @@ function TapHand() {
   return (
     <svg
       viewBox="0 0 48 48"
-      className="h-24 w-24 animate-tap-hand"
+      className="h-[clamp(32px,6vmin,72px)] w-[clamp(32px,6vmin,72px)] animate-tap-hand"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.2"

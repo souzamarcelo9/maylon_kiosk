@@ -48,40 +48,44 @@ export default function PixPage() {
   const expired = payment?.status === 'expired' || (payment && left === 0);
 
   return (
-    <div className="flex flex-1 items-center justify-center px-12 py-10">
-      <Card className="w-full max-w-2xl p-14 text-center">
-        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-brand-700 text-white">
+    <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-4 sm:px-8">
+      <Card className="pad-card w-full max-w-2xl text-center">
+        <div className="mx-auto flex h-[clamp(48px,9vmin,96px)] w-[clamp(48px,9vmin,96px)] items-center justify-center rounded-full bg-brand-700 text-white">
           <QrIcon />
         </div>
 
-        <h1 className="mt-8 text-4xl font-bold">Pagamento via PIX</h1>
-        <span className="mx-auto mt-4 block h-1 w-16 rounded bg-brand-300" />
+        <h1 className="t-title mt-[2.5vmin] font-bold">Pagamento via PIX</h1>
+        <span className="mx-auto mt-3 block h-1 w-16 rounded bg-brand-300" />
 
         {expired ? (
           <>
-            <p className="mt-10 text-2xl text-muted">
+            <p className="t-body mt-[3vmin] text-muted">
               O código expirou. Gere um novo para continuar.
             </p>
-            <Button className="mt-10" onClick={() => router.replace('/kiosk/veiculo')}>
+            <Button className="mt-[3vmin]" onClick={() => router.replace('/kiosk/veiculo')}>
               Gerar novo código
             </Button>
           </>
         ) : (
           <>
-            <p className="mt-6 text-2xl text-muted">
+            <p className="t-body mt-2 text-muted">
               Abra o app do seu banco e escaneie o código
             </p>
 
-            <div className="mx-auto mt-10 w-fit rounded-3xl bg-white p-6 shadow-inner">
-              <canvas ref={canvasRef} aria-label="QR Code do PIX" />
+            <div className="mx-auto mt-[3vmin] w-fit rounded-3xl bg-white p-3 shadow-inner sm:p-5">
+              <canvas
+                ref={canvasRef}
+                aria-label="QR Code do PIX"
+                className="h-auto w-[min(58vmin,420px)]"
+              />
             </div>
 
-            <p className="mt-10 text-xl text-muted">Valor da corrida</p>
-            <p className="text-6xl font-bold text-brand-800">
+            <p className="t-hint mt-[3vmin] text-muted">Valor da corrida</p>
+            <p className="t-price font-bold text-brand-800">
               {payment ? formatBRL(payment.amountCents) : '—'}
             </p>
 
-            <div className="mt-10 rounded-2xl bg-brand-50 py-6 text-2xl">
+            <div className="t-body mt-[3vmin] rounded-2xl bg-brand-50 py-4">
               {unreachable ? (
                 <span className="text-warn">Reconectando…</span>
               ) : (
@@ -92,7 +96,7 @@ export default function PixPage() {
               )}
             </div>
 
-            <p className="mt-8 text-xl text-muted">
+            <p className="t-hint mt-3 text-muted">
               A tela avança sozinha quando o pagamento cair.
             </p>
           </>
@@ -109,7 +113,7 @@ function mmss(ms: number) {
 
 function QrIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="h-1/2 w-1/2" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="3" y="14" width="7" height="7" rx="1" />

@@ -24,11 +24,11 @@ export function Field({
     <div className={className}>
       <label
         htmlFor={inputId}
-        className="mb-2 block text-xl font-medium text-ink"
+        className="t-label mb-2 block font-medium text-ink"
       >
         {label}
         {!rest.required && (
-          <span className="ml-2 text-lg font-normal text-muted">opcional</span>
+          <span className="t-hint ml-2 font-normal text-muted">opcional</span>
         )}
       </label>
 
@@ -37,7 +37,7 @@ export function Field({
           id={inputId}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${inputId}-err` : undefined}
-          className={`h-[76px] w-full rounded-2xl border-2 bg-white px-6 text-2xl outline-none transition placeholder:text-muted/60 ${
+          className={`field-h t-body w-full rounded-2xl border-2 bg-white px-5 outline-none transition placeholder:text-muted/60 ${
             error
               ? 'border-danger'
               : 'border-line focus:border-brand-600'
@@ -52,11 +52,11 @@ export function Field({
       </div>
 
       {error ? (
-        <p id={`${inputId}-err`} className="mt-2 text-lg text-danger">
+        <p id={`${inputId}-err`} className="t-hint mt-2 text-danger">
           {error}
         </p>
       ) : hint ? (
-        <p className="mt-2 text-lg text-muted">{hint}</p>
+        <p className="t-hint mt-2 text-muted">{hint}</p>
       ) : null}
     </div>
   );
