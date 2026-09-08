@@ -8,8 +8,11 @@ Get Smart ao lado, backend PHP/MySQL existente por trás.
 ```bash
 cp .env.example .env.local   # ajuste MAYLON_API_BASE e o KIOSK_ID
 npm install
-npm run dev                  # http://localhost:3000/kiosk
+npm run dev                  # http://localhost:3000 → redireciona para /kiosk
 ```
+
+A raiz `/` redireciona para `/kiosk` (307, configurado em `next.config.ts`).
+No tablet, aponte o navegador direto para `/kiosk` e evite o salto.
 
 Com `MAYLON_PAYMENT_DRIVER=mock` (padrão) o pagamento aprova em 3s. Não
 precisa da Getnet para percorrer o fluxo inteiro.
