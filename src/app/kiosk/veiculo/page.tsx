@@ -66,9 +66,17 @@ export default function VeiculoPage() {
         return;
       }
       if (res.status === 422) {
-        // O módulo recusou por divergência de valor. Recalcular é mais
-        // seguro que insistir com um preço que o banco não reconhece.
-        setError('O valor mudou. Toque em voltar e refaça a consulta.');
+        const data = await res.json().catch(() => ({}));
+
+        // Dois motivos diferentes caíam na mesma mensagem, o que
+        // atrapalhou o diagnóstico: divergência de valor é problema do
+        // passageiro (refazer a consulta), validação é bug nosso.
+        if (data?.error === 'amount_mismatch') {
+          setError('O valor mudou. Toque em voltar e refaça a consulta.');
+        } else {
+          console.error('[veiculo] pagamento recusado', data);
+          setError('Não foi possível iniciar o pagamento. Chame um atendente.');
+        }
         return;
       }
       if (!res.ok) {
@@ -106,7 +114,7 @@ export default function VeiculoPage() {
       <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:space-y-6 sm:p-8">
         <Card className="pad-tight">
           <h2 className="t-lead mb-4 font-semibold">Categoria</h2>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
             {quote.categories.map((c) => {
               const active = c.id === categoryId;
               return (
@@ -145,8 +153,8 @@ export default function VeiculoPage() {
         </Card>
 
         <Card className="pad-tight space-y-3">
-          <Route label="Origem" value={quote.origin.label} />
-          <Route label="Destino" value={quote.destination.label} />
+          <Route label="Origem" value={shortAddress(quote.origin.label)} />
+          <Route label="Destino" value={shortAddress(quote.destination.label)} />
           <div className="flex items-baseline justify-between border-t border-line pt-3">
             <span className="t-label font-semibold text-brand-700">Distância</span>
             <span className="t-label">{formatKm(quote.distanceKm)}</span>
@@ -195,6 +203,20 @@ export default function VeiculoPage() {
       </footer>
     </div>
   );
+}
+
+/**
+ * Encurta o endereço do Google.
+ *
+ * "Pr. dos Andradas, 45 - Centro, Santos - SP, 11010-250, Brazil" vira
+ * "Pr. dos Andradas, 45 - Centro, Santos - SP". CEP e país não ajudam
+ * ninguém no totem e roubam espaço de quem lê em pé.
+ */
+function shortAddress(value: string): string {
+  return value
+    .replace(/,\s*Brazil\s*$/i, '')
+    .replace(/,\s*\d{5}-?\d{3}\s*$/, '')
+    .trim();
 }
 
 function Route({ label, value }: { label: string; value: string }) {

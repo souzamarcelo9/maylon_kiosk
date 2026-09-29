@@ -375,6 +375,20 @@ interface FareRaw {
   encoded_polyline?: string;
   area_id?: string;
   surge_multiplier?: number | string;
+  extra_estimated_fare?: number | string;
+  extra_discount_fare?: number | string;
+  extra_discount_amount?: number | string;
+  extra_return_fee?: number | string;
+  extra_cancellation_fee?: number | string;
+  extra_fare_amount?: number | string;
+  extra_fare_fee?: number | string;
+}
+
+/** undefined em vez de 0, para não sobrescrever tarifa ausente. */
+function optNum(value: unknown): number | undefined {
+  if (value == null || value === '') return undefined;
+  const n = Number.parseFloat(String(value));
+  return Number.isFinite(n) ? n : undefined;
 }
 
 /**
@@ -412,12 +426,33 @@ export async function createQuote(input: {
     const meta = categories.get(catId);
     const discountCents = toCents(f.discount_amount ?? 0);
 
+    /*
+     * QUAL VALOR O PASSAGEIRO REALMENTE PAGA.
+     *
+     * Quando a zona tem taxa extra ou surge, o backend ignora
+     * `estimated_fare` e usa `extra_estimated_fare` ao criar a corrida:
+     *
+     *   elseif (!empty($extraFare) || !empty($surgePrice)) {
+     *       $estimatedFare = $request['extra_estimated_fare'];
+     *
+     * Mostrar `estimated_fare` na tela nesse caso é anunciar um preço e
+     * cobrar outro. Aqui a regra do backend é replicada, para a tarifa
+     * exibida, o expected_amount e o que é gravado no banco serem o
+     * mesmo número.
+     */
+    const extraFare = optNum(f.extra_estimated_fare);
+    const hasExtraFare = extraFare != null && extraFare > 0;
+
+    const effectiveFare = hasExtraFare
+      ? extraFare
+      : num(f.discount_fare ?? f.estimated_fare ?? 0);
+
     return {
       id: catId,
       name: meta?.name ?? f.vehicle_category_type ?? 'Categoria',
       categoryType: f.vehicle_category_type ?? meta?.type,
       imageUrl: meta?.imageUrl,
-      priceCents: toCents(f.discount_fare ?? f.estimated_fare ?? 0),
+      priceCents: toCents(effectiveFare),
       discountCents,
       discount: discountCents > 0,
       etaMinutes: Math.round(num(f.estimated_duration)),
@@ -430,6 +465,14 @@ export async function createQuote(input: {
       couponApplicable: f.coupon_applicable,
       rawEstimatedFare: num(f.estimated_fare),
       rawDiscountFare: num(f.discount_fare ?? f.estimated_fare),
+
+      extraEstimatedFare: optNum(f.extra_estimated_fare),
+      extraDiscountFare: optNum(f.extra_discount_fare),
+      extraDiscountAmount: optNum(f.extra_discount_amount),
+      extraReturnFee: optNum(f.extra_return_fee),
+      extraCancellationFee: optNum(f.extra_cancellation_fee),
+      extraFareAmount: optNum(f.extra_fare_amount),
+      extraFareFee: optNum(f.extra_fare_fee),
     };
   });
 
@@ -465,21 +508,23 @@ export async function createTrip(input: {
 
   const raw = await call<{ data: Record<string, any> }>('/api/kiosk/trips', {
     method: 'POST',
+    // A origem não é enviada: o módulo usa a do cadastro do totem.
     body: JSON.stringify({
       guest_id: input.guestId,
       vehicle_category_id: input.category.id,
-      pickup_coordinates: coord(config.origin.lat, config.origin.lng),
       destination_coordinates: coord(input.destination.lat, input.destination.lng),
-      pickup_address: config.origin.label,
       destination_address: input.destination.label,
       estimated_fare: input.category.rawEstimatedFare,
-      actual_fare: input.category.rawDiscountFare,
       estimated_distance: String(input.category.estimatedDistanceKm),
       estimated_time: String(input.category.estimatedDurationMin),
       encoded_polyline: input.category.encodedPolyline,
-      zone_id: input.category.zoneId || config.zoneId,
       area_id: input.category.areaId,
       surge_multiplier: input.category.surgeMultiplier,
+
+      // Havendo tarifa extra, é ela que o backend usa como valor.
+      extra_estimated_fare: input.category.extraEstimatedFare,
+      extra_fare_amount: input.category.extraFareAmount,
+      extra_fare_fee: input.category.extraFareFee,
     }),
   });
 

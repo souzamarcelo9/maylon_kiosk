@@ -1,36 +1,51 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createCharge } from '@/lib/payments';
+import { createCharge, type CreateChargeInput } from '@/lib/payments';
 import { LegacyApiError } from '@/lib/legacy-api';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * nullish, não optional.
+ *
+ * `.optional()` aceita `undefined` mas recusa `null`, e o backend
+ * devolve nulo em campo ausente — `area_id`, por exemplo. Com
+ * `.optional()` puro o pagamento era recusado por validação antes de
+ * qualquer coisa acontecer.
+ */
 const place = z.object({
   label: z.string(),
   lat: z.number(),
   lng: z.number(),
-  placeId: z.string().optional(),
-  zoneId: z.string().optional(),
+  placeId: z.string().nullish(),
+  zoneId: z.string().nullish(),
 });
 
 const category = z.object({
   id: z.string().min(1),
   name: z.string(),
-  categoryType: z.string().optional(),
-  imageUrl: z.string().optional(),
+  categoryType: z.string().nullish(),
+  imageUrl: z.string().nullish(),
   priceCents: z.number().int().nonnegative(),
   discountCents: z.number().int().nonnegative(),
-  etaMinutes: z.number().optional(),
-  discount: z.boolean().optional(),
+  etaMinutes: z.number().nullish(),
+  discount: z.boolean().nullish(),
   zoneId: z.string().min(1),
-  areaId: z.string().optional(),
-  encodedPolyline: z.string().optional(),
+  areaId: z.string().nullish(),
+  encodedPolyline: z.string().nullish(),
   estimatedDistanceKm: z.number(),
   estimatedDurationMin: z.number(),
-  surgeMultiplier: z.number().optional(),
-  couponApplicable: z.boolean().optional(),
+  surgeMultiplier: z.number().nullish(),
+  couponApplicable: z.boolean().nullish(),
   rawEstimatedFare: z.number(),
   rawDiscountFare: z.number(),
+  extraEstimatedFare: z.number().nullish(),
+  extraDiscountFare: z.number().nullish(),
+  extraDiscountAmount: z.number().nullish(),
+  extraReturnFee: z.number().nullish(),
+  extraCancellationFee: z.number().nullish(),
+  extraFareAmount: z.number().nullish(),
+  extraFareFee: z.number().nullish(),
 });
 
 const schema = z.object({
@@ -57,8 +72,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'missing_idempotency_key' }, { status: 400 });
   }
 
-  const parsed = schema.safeParse(await req.json().catch(() => null));
+  const body = await req.json().catch(() => null);
+  const parsed = schema.safeParse(body);
+
   if (!parsed.success) {
+    // Loga no servidor: a falha de validação acontece antes do try, e
+    // sem isto o 422 chega na tela sem nenhuma pista no terminal.
+    console.error('[kiosk/payments] validação falhou', {
+      issues: parsed.error.flatten().fieldErrors,
+      received: body,
+    });
+
     return NextResponse.json(
       { error: 'invalid_input', issues: parsed.error.flatten().fieldErrors },
       { status: 422 },
@@ -66,7 +90,19 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { payment } = await createCharge({ ...parsed.data, idempotencyKey });
+    // Normaliza null → undefined. O Zod aceita os dois para ser
+    // tolerante com o backend, mas os tipos internos usam undefined.
+    const clean = <T extends Record<string, unknown>>(obj: T): T =>
+      Object.fromEntries(
+        Object.entries(obj).map(([k, v]) => [k, v === null ? undefined : v]),
+      ) as T;
+
+    const { payment } = await createCharge({
+      ...parsed.data,
+      category: clean(parsed.data.category) as CreateChargeInput['category'],
+      destination: clean(parsed.data.destination) as CreateChargeInput['destination'],
+      idempotencyKey,
+    });
     return NextResponse.json({ payment }, { status: 201 });
   } catch (err) {
     console.error('[kiosk/payments]', err);

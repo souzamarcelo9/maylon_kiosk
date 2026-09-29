@@ -64,6 +64,22 @@ export interface VehicleCategory {
   /** estimated_fare cru, em reais, como o backend devolveu. */
   rawEstimatedFare: number;
   rawDiscountFare: number;
+
+  /**
+   * Tarifas de zona com taxa extra ou surge.
+   *
+   * Quando a zona tem uma das duas ativas, o backend IGNORA
+   * `estimated_fare` na criação da corrida e usa `extra_estimated_fare`.
+   * Não carregar estes campos faz a corrida nascer valendo zero — e o
+   * módulo então recusa o pagamento por divergência de valor.
+   */
+  extraEstimatedFare?: number;
+  extraDiscountFare?: number;
+  extraDiscountAmount?: number;
+  extraReturnFee?: number;
+  extraCancellationFee?: number;
+  extraFareAmount?: number;
+  extraFareFee?: number;
 }
 
 export interface Quote {
