@@ -115,14 +115,17 @@ async function triggerRefund(
     const res = await fetch(`/api/kiosk/payments/${paymentId}/refund`, {
       method: 'POST',
     });
-    const { refunded, manual } = await res.json();
-    if (refunded) {
-      setNote('O valor foi estornado automaticamente.');
-    } else if (manual) {
-      // Cartão presencial exige estorno na adquirente. Não prometa
-      // ao passageiro algo que o sistema não fez.
-      setNote('Procure um atendente para o estorno do pagamento.');
-    }
+    const { refunded } = await res.json();
+
+    // Nem PIX nem cartão estornam sozinhos neste backend. O PIX
+    // registra a devolução, mas o BTG exige aprovação no internet
+    // banking; o cartão exige estorno na Getnet. Prometer "estornado"
+    // ao passageiro seria falso.
+    setNote(
+      refunded
+        ? 'O estorno foi concluído.'
+        : 'A devolução foi registrada. Procure um atendente para confirmar o prazo.',
+    );
   } catch {
     setNote('Procure um atendente para o estorno do pagamento.');
   }

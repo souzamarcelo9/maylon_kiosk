@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import { Card } from '@/components/kiosk/Card';
@@ -14,22 +14,40 @@ export default function PixPage() {
   const router = useRouter();
   const { session, hydrated } = useKioskSession();
   const { payment, unreachable } = usePaymentStatus(session.paymentId);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [left, setLeft] = useState<number>(0);
 
   useEffect(() => {
     if (hydrated && !session.paymentId) router.replace('/kiosk');
   }, [hydrated, session.paymentId, router]);
 
-  // Desenha o QR a partir do payload EMV. Nada de imagem vinda do servidor.
-  useEffect(() => {
-    if (!payment?.pixPayload || !canvasRef.current) return;
-    QRCode.toCanvas(canvasRef.current, payment.pixPayload, {
-      width: 460,
-      margin: 1,
-      color: { dark: '#0b5e5a', light: '#ffffff' },
-    }).catch(() => {});
-  }, [payment?.pixPayload]);
+  /**
+   * Desenha o QR a partir do payload EMV.
+   *
+   * O ref é callback, e não useRef puro, de propósito. O canvas só é
+   * montado depois que o payload chega do BTG — antes disso a tela
+   * mostra "Gerando código". Com useEffect + ref comum, o efeito roda
+   * enquanto o elemento ainda não existe, não roda de novo quando ele
+   * aparece, e o resultado é um quadrado em branco.
+   *
+   * O callback dispara no instante em que o canvas monta, então o
+   * desenho acontece na ordem certa.
+   */
+  const drawQr = useCallback(
+    (canvas: HTMLCanvasElement | null) => {
+      canvasRef.current = canvas;
+      if (!canvas || !payment?.pixPayload) return;
+
+      QRCode.toCanvas(canvas, payment.pixPayload, {
+        width: 460,
+        margin: 1,
+        color: { dark: '#0b5e5a', light: '#ffffff' },
+      }).catch((err) => {
+        console.error('[pix] falha ao desenhar o QR', err);
+      });
+    },
+    [payment?.pixPayload],
+  );
 
   useEffect(() => {
     if (!payment?.expiresAt) return;
@@ -73,11 +91,20 @@ export default function PixPage() {
             </p>
 
             <div className="mx-auto mt-[3vmin] w-fit rounded-3xl bg-white p-3 shadow-inner sm:p-5">
-              <canvas
-                ref={canvasRef}
-                aria-label="QR Code do PIX"
-                className="h-auto w-[min(58vmin,420px)]"
-              />
+              {/* O EMV vem do BTG, então pode demorar um instante. Sem
+                  este estado o passageiro olha um quadrado em branco e
+                  acha que travou. */}
+              {payment?.pixPayload ? (
+                <canvas
+                  ref={drawQr}
+                  aria-label="QR Code do PIX"
+                  className="h-auto w-[min(58vmin,420px)]"
+                />
+              ) : (
+                <div className="flex h-[min(58vmin,420px)] w-[min(58vmin,420px)] items-center justify-center">
+                  <span className="t-body text-muted">Gerando código…</span>
+                </div>
+              )}
             </div>
 
             <p className="t-hint mt-[3vmin] text-muted">Valor da corrida</p>
