@@ -152,8 +152,13 @@ export default function CorridaPage({
 
             <div className="grid grid-cols-1 items-center gap-4 border-t border-line pt-4 sm:grid-cols-[1fr_auto] sm:gap-8">
               <div className="space-y-3">
-                <Row label="Origem" value={trip?.origin.label ?? kioskConfig.label} />
-                <Row label="Destino" value={trip?.destination.label ?? '—'} />
+                <Row label="Origem" value={String(trip?.origin?.label ?? kioskConfig.label ?? '')}/>
+
+                <Row
+                  label="Destino"
+                  value={trip?.destination?.label ?? '—'}
+                />
+
                 <Row
                   label="Valor da corrida"
                   value={trip ? formatBRL(trip.amountCents) : '—'}
