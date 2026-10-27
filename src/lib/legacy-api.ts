@@ -60,13 +60,14 @@ async function call<T>(path: string, options: CallOptions = {}): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  const headers: Record<string, string> = {
+    const headers: Record<string, string> = {
     'Content-Type': 'application/json; charset=UTF-8',
     Accept: 'application/json',
     'X-Kiosk-Token': serverConfig.kioskToken,
-    'X-Kiosk-Version': serverConfig.appVersion,
+    'X-Kiosk-Version': serverConfig.appVersion ?? '',
     ...(init.headers as Record<string, string>),
-  };
+    };
+    
   if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
 
   try {
