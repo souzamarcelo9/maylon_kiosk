@@ -7,15 +7,15 @@
  */
 export const kioskConfig = {
   /** Fallback até o /config responder. */
-  id: process.env.NEXT_PUBLIC_KIOSK_ID ?? 'KIOSK-DEV-01',
-  label: process.env.NEXT_PUBLIC_KIOSK_LABEL ?? 'Totem Maylon',
+  id: process.env.NEXT_PUBLIC_KIOSK_ID ,
+  label: process.env.NEXT_PUBLIC_KIOSK_LABEL ,
   trackingBase:
-    process.env.NEXT_PUBLIC_TRACKING_BASE ?? 'https://maylon.com.br/t',
+    process.env.NEXT_PUBLIC_TRACKING_BASE,
 } as const;
 
 /** Só no servidor. Nunca importe isto de um componente client. */
 export const serverConfig = {
-  apiBase: process.env.MAYLON_API_BASE ?? '',
+  apiBase: process.env.MAYLON_API_BASE,
   /**
    * Token do dispositivo, gerado por `php artisan kiosk:create`.
    *

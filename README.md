@@ -14,8 +14,7 @@ npm run dev                  # http://localhost:3000 → redireciona para /kiosk
 A raiz `/` redireciona para `/kiosk` (307, configurado em `next.config.ts`).
 No tablet, aponte o navegador direto para `/kiosk` e evite o salto.
 
-Com `MAYLON_PAYMENT_DRIVER=mock` (padrão) o pagamento aprova em 3s. Não
-precisa da Getnet para percorrer o fluxo inteiro.
+
 
 **Truque de teste:** valor terminado em 13 centavos é recusado. Use isso
 para exercitar a tela de recusa sem estourar limite de cartão.
