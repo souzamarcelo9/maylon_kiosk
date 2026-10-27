@@ -47,7 +47,7 @@ interface CallOptions extends RequestInit {
 }
 
 async function call<T>(path: string, options: CallOptions = {}): Promise<T> {
-  const { timeoutMs = 12_000, idempotencyKey, ...init } = options;
+  const { timeoutMs = 30_000, idempotencyKey, ...init } = options;
 
   if (!serverConfig.apiBase) {
     throw new LegacyApiError('MAYLON_API_BASE não configurado', 500);
@@ -650,6 +650,7 @@ export interface RemotePayment {
   pixTxId?: string;
   nsu?: string;
   declineReason?: string;
+  expiresAt?: string;
 }
 
 function mapPayment(d: Record<string, any>): RemotePayment {
@@ -663,6 +664,7 @@ function mapPayment(d: Record<string, any>): RemotePayment {
     pixTxId: d.pix_txid ?? undefined,
     nsu: d.nsu ?? undefined,
     declineReason: d.decline_reason ?? undefined,
+    expiresAt: d.expires_at ?? undefined,
   };
 }
 
@@ -754,4 +756,11 @@ export async function refundPayment(
   );
 
   return { refunded: Boolean(raw.refunded), manual: Boolean(raw.manual) };
+}
+
+/** POST /api/kiosk/payments/{id}/cancel — libera o totem na hora. */
+export async function cancelPayment(id: string): Promise<void> {
+  await call(`/api/kiosk/payments/${encodeURIComponent(id)}/cancel`, {
+    method: 'POST',
+  });
 }

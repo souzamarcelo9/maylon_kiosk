@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useState,
+  useRef,
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
@@ -53,6 +54,14 @@ export function KioskSessionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [session, setSession] = useState<KioskSession>({});
   const [hydrated, setHydrated] = useState(false);
+  
+  // O reset precisa de identidade estável: ele é dependência do
+// useEffect do useIdleReset, e recriá-lo reinicia o temporizador de
+// inatividade bem na tela de pagamento, onde a pessoa fica parada.
+  const sessionRef = useRef(session);
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     try {
@@ -76,12 +85,21 @@ export function KioskSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const reset = useCallback(() => {
+    const paymentId = sessionRef.current.paymentId;
+    if (paymentId) {
+      void fetch(`/api/kiosk/payments/${paymentId}/cancel`, {
+        method: 'POST',
+        keepalive: true,
+      }).catch(() => {});
+    }
+
     try {
       sessionStorage.removeItem(STORAGE_KEY);
     } catch {}
     setSession({});
     router.push('/kiosk');
   }, [router]);
+
 
   return (
     <Ctx.Provider value={{ session, hydrated, patch, reset }}>

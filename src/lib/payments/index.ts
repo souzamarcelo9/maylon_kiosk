@@ -9,6 +9,7 @@ import {
 } from '../legacy-api';
 import type { Payment, PaymentMethod, Place, VehicleCategory } from '../types';
 
+
 /**
  * Orquestração do pagamento no totem.
  *
@@ -115,7 +116,7 @@ export async function readPayment(
                 ? 'failed'
                 : (cached?.status ?? 'pending');
 
-    const merged: Payment = {
+   const merged: Payment = {
       ...(cached ?? {
         id,
         kioskId: '',
@@ -128,6 +129,14 @@ export async function readPayment(
       tripId: remote.tripId ?? cached?.tripId,
       amountCents: remote.amountCents,
       status,
+      // Vem do banco. Antes era recriado a cada leitura: como PIX não
+      // entra na fila local, `cached` era sempre undefined e o fallback
+      // acima regerava "agora + 5 min" a cada 1,5 s. O contador ficava
+      // oscilando entre 4:59 e 4:58 sem nunca baixar.
+      expiresAt:
+        remote.expiresAt ??
+        cached?.expiresAt ??
+        new Date(Date.now() + PAYMENT_TTL_MS).toISOString(),
       pixPayload: remote.pixEmv ?? cached?.pixPayload,
       pixTxId: remote.pixTxId ?? cached?.pixTxId,
       acquirerNsu: remote.nsu ?? cached?.acquirerNsu,
