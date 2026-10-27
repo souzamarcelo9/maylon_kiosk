@@ -24,12 +24,12 @@ export const serverConfig = {
    * desativar uma linha em `kiosks`. Um Bearer de cliente vazado do
    * tablet lê corridas de terceiros e mexe em carteira.
    */
-  kioskToken: process.env.MAYLON_KIOSK_TOKEN ?? '',
-  paymentDriver: (process.env.MAYLON_PAYMENT_DRIVER ?? 'mock') as
+  kioskToken: process.env.MAYLON_KIOSK_TOKEN,
+  paymentDriver: (process.env.MAYLON_PAYMENT_DRIVER) as
     | 'mock'
     | 'getnet_app2app',
-  terminalId: process.env.MAYLON_TERMINAL_ID ?? 'TERM-DEV-01',
-  appVersion: process.env.NEXT_PUBLIC_APP_VERSION ?? 'dev',
+  terminalId: process.env.MAYLON_TERMINAL_ID,
+  appVersion: process.env.NEXT_PUBLIC_APP_VERSION,
 };
 
 /** Volta para a tela inicial depois disto de inatividade. */
