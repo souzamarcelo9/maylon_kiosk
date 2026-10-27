@@ -5,6 +5,8 @@
  * carrega só o token: trocar um totem de porta virou uma linha no banco
  * em vez de reprovisionar o equipamento.
  */
+import 'server-only';
+
 export const kioskConfig = {
   /** Fallback até o /config responder. */
   id: process.env.NEXT_PUBLIC_KIOSK_ID ,
