@@ -1,4 +1,4 @@
-import { serverConfig } from './config';
+import { serverConfig } from './server-config';
 import type {
   Driver,
   GuestPassenger,

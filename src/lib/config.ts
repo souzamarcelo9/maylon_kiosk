@@ -5,7 +5,6 @@
  * carrega só o token: trocar um totem de porta virou uma linha no banco
  * em vez de reprovisionar o equipamento.
  */
-import 'server-only';
 
 export const kioskConfig = {
   /** Fallback até o /config responder. */
@@ -16,8 +15,8 @@ export const kioskConfig = {
 } as const;
 
 /** Só no servidor. Nunca importe isto de um componente client. */
-export const serverConfig = {
-  apiBase: process.env.MAYLON_API_BASE,
+//export const serverConfig = {
+ // apiBase: process.env.MAYLON_API_BASE,
   /**
    * Token do dispositivo, gerado por `php artisan kiosk:create`.
    *
@@ -26,13 +25,13 @@ export const serverConfig = {
    * desativar uma linha em `kiosks`. Um Bearer de cliente vazado do
    * tablet lê corridas de terceiros e mexe em carteira.
    */
-  kioskToken: process.env.MAYLON_KIOSK_TOKEN,
-  paymentDriver: (process.env.MAYLON_PAYMENT_DRIVER) as
-    | 'mock'
-    | 'getnet_app2app',
-  terminalId: process.env.MAYLON_TERMINAL_ID,
-  appVersion: process.env.NEXT_PUBLIC_APP_VERSION,
-};
+  //kioskToken: process.env.MAYLON_KIOSK_TOKEN,
+  //paymentDriver: (process.env.MAYLON_PAYMENT_DRIVER) as
+   // | 'mock'
+   // | 'getnet_app2app',
+ // terminalId: process.env.MAYLON_TERMINAL_ID,
+ // appVersion: process.env.NEXT_PUBLIC_APP_VERSION,
+//};
 
 /** Volta para a tela inicial depois disto de inatividade. */
 export const IDLE_TIMEOUT_MS = 90_000;
