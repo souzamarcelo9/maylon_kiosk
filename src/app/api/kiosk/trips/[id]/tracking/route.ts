@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { serverConfig } from '@/lib/server-config';
+import { serverConfig,requireEnv } from '@/lib/server-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ export async function GET(
       {
         headers: {
           Accept: 'application/json',
-          'X-Kiosk-Token': serverConfig.kioskToken,
+          'X-Kiosk-Token': requireEnv('kioskToken'),
         },
         cache: 'no-store',
         signal: AbortSignal.timeout(10_000),
