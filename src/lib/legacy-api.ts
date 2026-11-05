@@ -1,4 +1,4 @@
-import { serverConfig } from './server-config';
+import { serverConfig , requireEnv} from './server-config';
 import type {
   Driver,
   GuestPassenger,
@@ -63,7 +63,8 @@ async function call<T>(path: string, options: CallOptions = {}): Promise<T> {
     const headers: Record<string, string> = {
     'Content-Type': 'application/json; charset=UTF-8',
     Accept: 'application/json',
-    'X-Kiosk-Token': serverConfig.kioskToken,
+    //'X-Kiosk-Token': serverConfig.kioskToken,
+    'X-Kiosk-Token': requireEnv('kioskToken'),
     'X-Kiosk-Version': serverConfig.appVersion ?? '',
     ...(init.headers as Record<string, string>),
     };
@@ -71,7 +72,7 @@ async function call<T>(path: string, options: CallOptions = {}): Promise<T> {
   if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
 
   try {
-    const res = await fetch(`${serverConfig.apiBase}${path}`, {
+    const res = await fetch(`${requireEnv('apiBase')}${path}`, {
       ...init,
       headers,
       signal: controller.signal,

@@ -13,7 +13,7 @@ export const kioskConfig = {
   trackingBase:
     process.env.NEXT_PUBLIC_TRACKING_BASE,
 } as const;
-
+ 
 /** Só no servidor. Nunca importe isto de um componente client. */
 //export const serverConfig = {
  // apiBase: process.env.MAYLON_API_BASE,
